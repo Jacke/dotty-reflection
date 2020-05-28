@@ -22,6 +22,7 @@ object Reflector:
       println("HERE")
       val structure = discoverStructure(qctx)(typeOf[T])
       println("Structure: "+structure)
+      println("Companion: " + Class.forName(structure.className+"$"))
 
       // Problem:  Class.forName crashes because the given class hasn't been compiled yet, even though we know its name
       BogusInfo().asInstanceOf[RType]
