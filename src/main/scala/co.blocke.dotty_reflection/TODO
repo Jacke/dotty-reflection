@@ -1,0 +1,18 @@
+
+Need clazz file for:
+
+    1) Get Type Parameters
+
+    2) Get superclass (and reflect on it)
+
+    3) For non-case classes access getDeclaredMethod (to make sure all constructor args are vals)
+
+    4) Get companion classes (to access any default values)
+    
+    5) Used in AppliedType (inspectType) to reflectOnClassWithParams
+
+    (morphed to infoClass in inspectNonCaseClass)
+
+    6) Get superclass and reflect on it
+    
+    7) Get inherited methods

@@ -37,10 +37,10 @@ case class TypeSymbolInfo(name: String) extends RType:
 case class SelfRefRType(name: String, params: List[RType] = Nil) extends RType:
   val infoClass = Class.forName(name)
   val orderedTypeParameters: List[TypeSymbol] = Nil
-  // def resolve = params match {
-  //   case Nil => Reflector.reflectOnClass(infoClass)
-  //   case p => Reflector.reflectOnClassWithParams(infoClass, p)
-  // }
+  def resolve = params match {
+    case Nil => Reflector.reflectOnClass(infoClass)
+    case p => Reflector.reflectOnClassWithParams(infoClass, p)
+  }
   def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = s"SelfRefRType of $name" 
 
 

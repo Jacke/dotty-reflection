@@ -1,8 +1,8 @@
 package co.blocke.dotty_reflection
 
 // import impl.ScalaClassInspector
-// import info._ 
-// import impl._
+import info._ 
+import impl._
 // import scala.tasty.inspector._
 // import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
@@ -19,13 +19,7 @@ object Reflector:
     import qctx.tasty.{_, given _}
 
     Expr{
-      println("HERE")
-      val structure = discoverStructure(qctx)(typeOf[T])
-      println("Structure: "+structure)
-
-      // Problem:  Class.forName crashes because the given class hasn't been compiled yet, even though we know its name
-      BogusInfo().asInstanceOf[RType]
-      // TastyReflection(qctx)(typeOf[T]).reflectOn
+      TastyReflection(qctx)(typeOf[T]).reflectOn
       // val structure = discoverStructure(qctx)(typeOf[T])
       // TODO: Need unpack here!  But modified so its not calling reflectOnClass... it needs to stay at internals-level
       // new ScalaClassInspector(null, Map.empty[TypeSymbol,RType] ).reflectOn(qctx)(typeOf[T]) 
@@ -43,7 +37,6 @@ object Reflector:
         val params = tob.map( tb => discoverStructure(qctx)(tb.asInstanceOf[Type]) )
         TypeStructure(className, params)
       case tr: TypeRef => 
-        println("Sym: "+tr.classSymbol.getClass.getMethods.mkString("\n"))
         val className = tr.classSymbol.get.fullName
         if className == ENUM_CLASSNAME then
           TypeStructure(tr.qualifier.asInstanceOf[TypeRef].termSymbol.moduleClass.fullName.dropRight(1), Nil)
@@ -60,7 +53,6 @@ object Reflector:
     }
 
 
-    /*
   /** Same as reflectOn, except given a Class object instead of a type, T.
    *  NOTE: If Class is parameterized, this call can't infer the types of the parameters.  In that case, call reflectOnClassWithParams
    */
@@ -98,7 +90,6 @@ object Reflector:
       paramerterizedClassCache.put((clazz,params), found)
       found
     }
-    */
 
     /*
   private def unpackTypeStructure(ps: TypeStructure): RType =
