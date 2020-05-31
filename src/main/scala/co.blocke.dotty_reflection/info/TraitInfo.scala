@@ -1,13 +1,13 @@
 package co.blocke.dotty_reflection
 package info
 
-import impl.ClassOrTrait
+// import impl.ClassOrTrait
 
 case class TraitInfo protected[dotty_reflection](
     name: String, 
     orderedTypeParameters: List[TypeSymbol],
     actualParameterTypes: List[RType]
-  ) extends RType with ClassOrTrait:
+  ) extends RType: // with ClassOrTrait:
 
   lazy val infoClass: Class[_] = Class.forName(name)
 
@@ -29,7 +29,7 @@ case class SealedTraitInfo protected(
     name: String, 
     orderedTypeParameters: List[TypeSymbol],
     children: List[RType]
-  ) extends RType with ClassOrTrait:
+  ) extends RType: // with ClassOrTrait:
 
   lazy val infoClass: Class[_] = Class.forName(name)
 

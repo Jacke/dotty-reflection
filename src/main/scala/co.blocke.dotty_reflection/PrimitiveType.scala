@@ -2,7 +2,8 @@ package co.blocke.dotty_reflection
 
 import Clazzes._
 
-enum PrimitiveType(val name: String, val infoClass: Class[_]) extends RType:
+enum PrimitiveType(val name: String, val _infoClass: Class[_]) extends RType:
+  lazy val infoClass: Class[_] = _infoClass
   val orderedTypeParameters: List[TypeSymbol] = Nil
 
   case Scala_Boolean extends PrimitiveType("scala.Boolean", BooleanClazz)

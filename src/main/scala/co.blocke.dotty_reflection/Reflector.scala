@@ -2,12 +2,13 @@ package co.blocke.dotty_reflection
 
 // import impl.ScalaClassInspector
 // import info._ 
-// import impl._
+import impl._
 // import scala.tasty.inspector._
 // import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
 import Clazzes._
 import scala.quoted._
+import scala.tasty.Reflection
 
 case class TypeStructure( className: String, params: List[TypeStructure] )
 
@@ -18,45 +19,45 @@ object Reflector:
   def reflectOnImpl[T]()(implicit qctx: QuoteContext, ttype:scala.quoted.Type[T]): Expr[RType] = 
     import qctx.tasty.{_, given _}
 
-    Expr{
-      println("HERE")
-      val structure = discoverStructure(qctx)(typeOf[T])
-      println("Structure: "+structure)
-      println("Companion: " + Class.forName(structure.className+"$"))
+    Expr( unwindType(qctx.tasty)(typeOf[T]) )
 
-      // Problem:  Class.forName crashes because the given class hasn't been compiled yet, even though we know its name
-      BogusInfo().asInstanceOf[RType]
-      // TastyReflection(qctx)(typeOf[T]).reflectOn
-      // val structure = discoverStructure(qctx)(typeOf[T])
-      // TODO: Need unpack here!  But modified so its not calling reflectOnClass... it needs to stay at internals-level
-      // new ScalaClassInspector(null, Map.empty[TypeSymbol,RType] ).reflectOn(qctx)(typeOf[T]) 
-      // new ScalaClassInspector(Class.forName(structure.className), Map.empty[TypeSymbol,RType] ).reflectOn(qctx)(typeOf[T]) 
+
+  def unwindType(reflect: Reflection)(aType: reflect.Type): RType =
+    import reflect.{_, given _}
+
+    val structure = discoverStructure(reflect)(aType)
+    this.synchronized {
+      Option(cache.get(structure)).getOrElse{ 
+        cache.put(structure, SelfRefRType(structure.className))
+        val reflectedRtype = TastyReflection(reflect)(aType).reflectOn
+        cache.put(structure, reflectedRtype)
+        reflectedRtype
+      }
     }
-    // Expr(unpackTypeStructure(discoverStructure(qctx)(typeOf[T])))
-    // Expr(TypeMemberInfo("MyTypeMember", "Z".asInstanceOf[TypeSymbol], BogusInfo()))
+
     
-  def discoverStructure(qctx: QuoteContext)(aType: qctx.tasty.Type): TypeStructure =
-    import qctx.tasty.{_, given _}
+  def discoverStructure(reflect: Reflection)(aType: reflect.Type): TypeStructure =
+    import reflect.{_, given _}
+
     aType match {
       case AppliedType(t,tob) =>
         val className = t.asInstanceOf[TypeRef].classSymbol.get.fullName
         val res = tob.map(_.asInstanceOf[TypeRef].classSymbol.get.fullName)
-        val params = tob.map( tb => discoverStructure(qctx)(tb.asInstanceOf[Type]) )
+        val params = tob.map( tb => discoverStructure(reflect)(tb.asInstanceOf[Type]) )
         TypeStructure(className, params)
       case tr: TypeRef => 
-        println("Sym: "+tr.classSymbol.getClass.getMethods.mkString("\n"))
         val className = tr.classSymbol.get.fullName
         if className == ENUM_CLASSNAME then
           TypeStructure(tr.qualifier.asInstanceOf[TypeRef].termSymbol.moduleClass.fullName.dropRight(1), Nil)
         else
           TypeStructure(className, Nil)
       case OrType(left,right) =>
-        val resolvedLeft = discoverStructure(qctx)(left.asInstanceOf[Type])
-        val resolvedRight = discoverStructure(qctx)(right.asInstanceOf[Type])
+        val resolvedLeft = discoverStructure(reflect)(left.asInstanceOf[Type])
+        val resolvedRight = discoverStructure(reflect)(right.asInstanceOf[Type])
         TypeStructure(UNION_CLASS, List(resolvedLeft, resolvedRight))
       case AndType(left,right) =>
-        val resolvedLeft = discoverStructure(qctx)(left.asInstanceOf[Type])
-        val resolvedRight = discoverStructure(qctx)(right.asInstanceOf[Type])
+        val resolvedLeft = discoverStructure(reflect)(left.asInstanceOf[Type])
+        val resolvedRight = discoverStructure(reflect)(right.asInstanceOf[Type])
         TypeStructure(INTERSECTION_CLASS, List(resolvedLeft, resolvedRight))
     }
 
