@@ -174,9 +174,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
       if symbol.flags.is(reflect.Flags.Case) then
         // case classes
         val caseFields = symbol.caseFields.zipWithIndex.map(f => reflectOnField(reflect, paramMap)(f))
-        println("Fields: "+caseFields)
-
-        UnknownInfo("case class boop")
+        ScalaCaseClassInfo(className, Nil, Nil, caseFields.toArray, Map.empty[String, Map[String,String]], false)
       else
         UnknownInfo("boop")
 

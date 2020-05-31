@@ -5,7 +5,7 @@ package info
 
 trait ClassInfo extends RType: // TODO with ClassOrTrait:
   val name:                  String
-  lazy val fields:           List[FieldInfo]
+  lazy val  fields:          Array[FieldInfo]
   val orderedTypeParameters: List[TypeSymbol]
   val typeMembers:           List[TypeMemberInfo]
   val annotations:           Map[String, Map[String,String]]
@@ -15,7 +15,7 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
     name:                  String,
     orderedTypeParameters: List[TypeSymbol],
     typeMembers:           List[TypeMemberInfo],
-    _fields:               List[FieldInfo],
+    _fields:               Array[FieldInfo],
     annotations:           Map[String, Map[String,String]],
     isValueClass:          Boolean
   ) extends ClassInfo:

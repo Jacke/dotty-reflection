@@ -3,7 +3,7 @@ package info
 
 import java.lang.reflect.Method
 
-trait FieldInfo:
+trait FieldInfo extends Serializable:
   val index:                Int
   val name:                 String
   val fieldType:            RType

@@ -1,7 +1,7 @@
 package co.blocke.dotty_reflection
 
 /** A materializable type */
-trait RType:
+trait RType extends Serializable:
   val name: String         /** typically the fully-qualified class name */
   lazy val infoClass: Class[_]  /** the JVM class of this type */
   val orderedTypeParameters: List[TypeSymbol]  /** if this is a parameterized type,  list of type symbols in order of declaration */
