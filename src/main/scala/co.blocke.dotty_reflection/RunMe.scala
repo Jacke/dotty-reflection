@@ -7,7 +7,7 @@ package co.blocke.dotty_reflection
 
 object RunMe extends App:
 
-  println(Reflector.reflectOn[HooLoo])
+  println(Reflector.reflectOn[Meep])
   // println(Reflector.reflectOn[Animal[Int]])
   // println(Reflector.reflectOn[Car])
   println("done.")

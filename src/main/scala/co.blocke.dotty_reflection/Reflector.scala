@@ -14,9 +14,9 @@ case class TypeStructure( className: String, params: List[TypeStructure] )
 
 object Reflector:
 
-  //------------------
-  //  <<  MACRO  >>
-  //------------------
+  //------------------------
+  //  <<  MACRO ENTRY >>
+  //------------------------
   inline def reflectOn[T]: RType = ${ reflectOnImpl[T]() }
 
   def reflectOnImpl[T]()(implicit qctx: QuoteContext, ttype:scala.quoted.Type[T]): Expr[RType] = 
