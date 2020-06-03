@@ -60,7 +60,6 @@ case class ScalaEnumerationInfo protected[dotty_reflection](
   def valueOf(i: Int): Any = applyMethod.invoke(companionInstance,i.asInstanceOf[Object])
 
 
-  
 case class JavaEnumInfo protected[dotty_reflection](
   name: String
 ) extends RType: 

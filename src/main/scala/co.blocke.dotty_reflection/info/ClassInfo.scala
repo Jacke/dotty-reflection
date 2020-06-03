@@ -5,10 +5,13 @@ package info
 
 trait ClassInfo extends RType: // TODO with ClassOrTrait:
   val name:                  String
-  lazy val  fields:          Array[FieldInfo]
+  lazy val fields:           Array[FieldInfo]
   val orderedTypeParameters: List[TypeSymbol]
   val typeMembers:           List[TypeMemberInfo]
   val annotations:           Map[String, Map[String,String]]
+  val mixins:                List[String]
+
+  def hasMixin(mixin: String): Boolean = mixins.contains(mixin)
 
 
 case class ScalaCaseClassInfo protected[dotty_reflection] (
@@ -17,6 +20,7 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
     typeMembers:           List[TypeMemberInfo],
     _fields:               Array[FieldInfo],
     annotations:           Map[String, Map[String,String]],
+    mixins:                List[String],
     isValueClass:          Boolean
   ) extends ClassInfo:
 

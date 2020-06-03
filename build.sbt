@@ -1,4 +1,5 @@
-val dottyVersion =  "0.25.0-bin-20200523-5358651-NIGHTLY" //"0.24.0-RC1"
+val dottyVersion =  "0.24.0-RC1"
+// val dottyVersion =  "0.25.0-bin-20200523-5358651-NIGHTLY"
 
 val pubSettings = Seq(
   publishMavenStyle := true,

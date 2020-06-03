@@ -15,12 +15,16 @@ trait Car {
 }
 
 
-class Foundation()
+class Foundation( 
+  @FieldAnno(idx=5) frame: String 
+)
+
+trait BuildableThing
 
 @ClassAnno(name="Home")
 case class House(
-  @FieldAnno(idx=5) frame: String 
-) extends Foundation
+  frame: String 
+) extends Foundation(frame) with BuildableThing
 
 /*
 Interesting!  A trait w/no type params is a class type with flags set as trait.
@@ -50,3 +54,4 @@ enum Month {
 // case class Meep( a: WeekDay )
 // case class Meep( b: Month)
 case class Meep( a: WeekDay, b: Month)
+

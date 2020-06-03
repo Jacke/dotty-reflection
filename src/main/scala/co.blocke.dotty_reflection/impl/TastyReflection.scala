@@ -104,7 +104,8 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
                 case cs if is2xEnumeration => 
                   val enumerationClassSymbol = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass
                   ScalaEnumerationInfo(typeRef.name, enumerationClassSymbol.fields.map( _.name ))  // get the values of the Enumeration
-                case _ => reflectOnClass(reflect, paramMap)(typeRef)
+                case cs => 
+                  reflectOnClass(reflect, paramMap)(typeRef)
                 // case cs =>
                 //   Class.forName(className) match {
                 //     case c if c <:< EnumClazz => ScalaEnumInfo(className, c)
@@ -194,30 +195,40 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         }).toMap)
       }.toMap
 
+      // Get superclass' field annotations--if any
+      val dad = classDef.parents.head match {
+        case tt: TypeTree => 
+          reflectOnClass(reflect,paramMap)(tt.tpe.asInstanceOf[TypeRef]) match {
+            case ci: ClassInfo => Some(ci) // Any kind of class
+            case _ => None // e.g. Unknown
+          }
+        case _ => None
+      }
       // All this mucking around in the constructor.... why not just get the case fields from the symbol?
       // Because:  symbol's case fields lose the annotations!  Pulling from contstructor ensures they are retained.
       val constructorParamz = classDef.constructor.paramss
       val classMembers = classDef.body.collect {
         case vd: reflect.ValDef => vd
       }.map(f => (f.name->f)).toMap
-      val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2) )
+      val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2, dad) )
 
-      ScalaCaseClassInfo(className, Nil, Nil, caseFields.toArray, classAnnos, false)
+      ScalaCaseClassInfo(
+        className, 
+        Nil, 
+        Nil, 
+        caseFields.toArray, 
+        classAnnos, 
+        classDef.parents.map(_.symbol.fullName), 
+        false)
 
     // Other kinds of classes (Java, non-case Scala)
     else
-      UnknownInfo("boop")
+      UnknownInfo(symbol.fullName)
 
 
-  private def reflectOnField(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(valDef: reflect.ValDef, index: Int): FieldInfo = 
+  private def reflectOnField(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(valDef: reflect.ValDef, index: Int, dad: Option[ClassInfo]): FieldInfo = 
     val fieldAnnos = {
-      val baseAnnos = 
-        if valDef.symbol.flags.is(reflect.Flags.Override) then
-          // TODO: Get Base annos for inheritance!
-          // dad.asInstanceOf[ScalaClassInfo].fields.find(_.name == valDef.name).map(_.annotations).get
-          Map.empty[String,Map[String,String]]
-        else
-          Map.empty[String,Map[String,String]]
+      val baseAnnos = dad.flatMap( _.fields.find(_.name == valDef.name) ).map(_.annotations).getOrElse(Map.empty[String,Map[String,String]])
       baseAnnos ++ valDef.symbol.annots.map{ a => 
         val reflect.Apply(_, params) = a
         val annoName = a.symbol.signature.resultSig
