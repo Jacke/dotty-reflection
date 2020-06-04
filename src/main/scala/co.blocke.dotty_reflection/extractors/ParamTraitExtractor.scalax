@@ -1,0 +1,35 @@
+package co.blocke.dotty_reflection
+package extractors
+
+import impl._
+import Clazzes._
+import info._ 
+import scala.tasty.Reflection
+
+case class ParamTraitExtractor() extends TypeInfoExtractor[TraitInfo]:
+
+  def matches(reflect: Reflection)(symbol: reflect.Symbol): Boolean = symbol.flags.is(reflect.Flags.Trait)
+
+  def emptyInfo(symbol: reflect.Symbol, paramMap: Map[TypeSymbol,RType]): TraitInfo = TraitInfo(symbol.fullName, Nil, Nil)
+    val tryParamSymName = clazz.getTypeParameters.toList.head.getName 
+    val tryParamType = paramMap.getOrElse(
+      tryParamSymName.asInstanceOf[TypeSymbol], 
+      TypeSymbolInfo(tryParamSymName)
+      )
+    TryInfo(
+      clazz.getName, 
+      clazz, 
+      tryParamType
+      )
+  
+    def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
+      t: reflect.Type, 
+      tob: List[reflect.TypeOrBounds], 
+      symbol: reflect.Symbol,
+      typeInspector: ScalaClassInspectorLike): RType
+
+      TryInfo(
+        className,
+        clazz,
+        typeInspector.inspectType(reflect, paramMap)(tob.head.asInstanceOf[reflect.TypeRef])
+      )

@@ -1,0 +1,102 @@
+[info] Loading global plugins from /Users/wmy965/.sbt/1.0/plugins
+[info] Loading settings for project dotty-reflection-build from plugins.sbt ...
+[info] Loading project definition from /Users/wmy965/git/dotty-reflection/project
+[info] Loading settings for project root from build.sbt ...
+[info] Set current project to dotty-reflection (in build file:/Users/wmy965/git/dotty-reflection/)
+[info] Compiling 44 Scala sources to /Users/wmy965/git/dotty-reflection/target/scala-0.24/classes ...
+[info] Done compiling.
+[info] Compiling 44 Scala sources to /Users/wmy965/git/dotty-reflection/target/scala-0.24/classes ...
+[info] Done compiling.
+[info] Compiling 8 Scala sources and 17 Java sources to /Users/wmy965/git/dotty-reflection/target/scala-0.24/test-classes ...
+[info] /Users/wmy965/git/dotty-reflection/src/test/java/co/blocke/reflect/Person.java: /Users/wmy965/git/dotty-reflection/src/test/java/co/blocke/reflect/Person.java uses unchecked or unsafe operations.
+[info] /Users/wmy965/git/dotty-reflection/src/test/java/co/blocke/reflect/Person.java: Recompile with -Xlint:unchecked for details.
+[info] Done compiling.
+[32mco.blocke.dotty_reflection.ScalaTasty:[0m
+[32m  + [0m[32mreflect basic Tasty class with union[0m [90m6.182s[0m
+[32m  + [0m[32mcreate basic Tasty class[0m [90m0.003s[0m
+[32m  + [0m[32mhandle match types[0m [90m0.761s[0m
+[32m  + [0m[32mprocess mixins[0m [90m0.461s[0m
+[32m  + [0m[32mcapture field and class annotations[0m [90m0.462s[0m
+[32m  + [0m[32mhandle parameterized class[0m [90m0.444s[0m
+[32m  + [0m[32mhandle opaque type alias[0m [90m0.418s[0m
+[32m  + [0m[32mopaque type alias is a union type[0m [90m0.345s[0m
+[32m  + [0m[32msupport value classes[0m [90m0.473s[0m
+[32m  + [0m[32mdetect default values in case class constructor fields[0m [90m0.281s[0m
+co.blocke.dotty_reflection.ReflectException: Class [co.blocke.dotty_reflection.PlainBad]: Non-case class constructor arguments must all be 'val' while compiling co.blocke.dotty_reflection.PlainBad
+[32m  + [0m[32mplain class support[0m [90m0.442s[0m
+[32m  + [0m[32mall Scala primitive types[0m [90m0.523s[0m
+[32m  + [0m[32munknown class[0m [90m0.22s[0m
+[32m  + [0m[32mTry type[0m [90m0.55s[0m
+[32m  + [0m[32msealed trait with case classes[0m [90m1.656s[0m
+[32m  + [0m[32msealed trait with case objects[0m [90m1.25s[0m
+[32m  + [0m[32mhandle intersection types[0m [90m0.992s[0m
+[32m  + [0m[32mhandle Scala non-case classes[0m [90m0.312s[0m
+[32m  + [0m[32mInheritance and Annotations[0m [90m0.67s[0m
+[32m  + [0m[32mInheritance and Parameterized Classes[0m [90m0.378s[0m
+[32mco.blocke.dotty_reflection.Eithers:[0m
+[32m  + [0m[32mScala simple Either field[0m [90m0.321s[0m
+[32m  + [0m[32mScala simple Either field assignment[0m [90m0.004s[0m
+[32m  + [0m[32mScala Either with Option[0m [90m0.208s[0m
+[32m  + [0m[32mScala Either with Option assignment[0m [90m0.002s[0m
+[32m  + [0m[32mScala Either with Union type[0m [90m0.254s[0m
+[32m  + [0m[32mScala Either with Union type assignment[0m [90m0.002s[0m
+[32m  + [0m[32mScala Either having a parameterized type[0m [90m0.776s[0m
+[32mco.blocke.dotty_reflection.Parameters:[0m
+[32m  + [0m[32m0-level param substitution[0m [90m0.282s[0m
+[32m  + [0m[32m0-level Option substitution[0m [90m0.062s[0m
+[32m  + [0m[32m0-level Either substitution[0m [90m0.041s[0m
+[32m  + [0m[32m0-level Map substitution[0m [90m0.071s[0m
+[32m  + [0m[32m0-level List (Seq) substitution[0m [90m0.045s[0m
+[32m  + [0m[32m0-level Try substitution[0m [90m0.072s[0m
+[32m  + [0m[32m0-level Trait substitution[0m [90m0.109s[0m
+[32m  + [0m[32m0-level Tuple substitution[0m [90m0.06s[0m
+[32m  + [0m[32m0-level Union substitution[0m [90m0.001s[0m
+[32m  + [0m[32m0-level Intersection substitution[0m [90m0.364s[0m
+[32m  + [0m[32m1st level param substitution[0m [90m0.224s[0m
+[32m  + [0m[32m2nd level param substitution - Option[0m [90m0.478s[0m
+[32m  + [0m[32m3rd level param substitution - Option[0m [90m0.375s[0m
+[32m  + [0m[32m2nd and 3rd level param substitution - Either[0m [90m0.514s[0m
+[32m  + [0m[32mOpaque type alias type substitution (rare)[0m [90m0.665s[0m
+[32m  + [0m[32m2nd level subsitution in a class field[0m [90m0.643s[0m
+[32m  + [0m[32mList and Map subsitituion[0m [90m1.025s[0m
+[32m  + [0m[32mTry type substitution[0m [90m0.633s[0m
+[32m  + [0m[32mTrait type substitution[0m [90m0.52s[0m
+[32m  + [0m[32mUnion type substitution[0m [90m0.506s[0m
+[32m  + [0m[32mType member substitutions[0m [90m0.571s[0m
+[32m  + [0m[32mNested trait substitutions[0m [90m1.708s[0m
+[32mco.blocke.dotty_reflection.JavaNonTasty:[0m
+[32m  + [0m[32mreflect basic with capture[0m [90m0.23s[0m
+[32m  + [0m[32mcreate Java object[0m [90m0.003s[0m
+[32m  + [0m[32mVerify Java primitives[0m [90m0.098s[0m
+[32m  + [0m[32mDetect parameterized Java class[0m [90m0.076s[0m
+[32m  + [0m[32mJava collection types[0m [90m0.175s[0m
+[32m  + [0m[32mNested Java classes[0m [90m0.157s[0m
+[32m  + [0m[32mJava parameterized class top level[0m [90m0.098s[0m
+[32m  + [0m[32mJava parameterized class field member[0m [90m0.058s[0m
+[32mco.blocke.dotty_reflection.Options:[0m
+[32m  + [0m[32mScala optional field[0m [90m0.215s[0m
+[32m  + [0m[32mJava optional field[0m [90m0.048s[0m
+[32m  + [0m[32mScala nested optional field[0m [90m0.45s[0m
+[32m  + [0m[32mJava nested optional field[0m [90m0.052s[0m
+[32m  + [0m[32mScala optional parameterized field[0m [90m0.441s[0m
+[32m  + [0m[32mJava optional parameterized field[0m [90m0.061s[0m
+[32m  + [0m[32mOption assignments in union type[0m [90m0.504s[0m
+[32m  + [0m[32mOption of a union[0m [90m0.249s[0m
+[32m  + [0m[32mOption of a union assignment[0m [90m0.001s[0m
+[32mco.blocke.dotty_reflection.Enums:[0m
+[32m  + [0m[32mJava Enums[0m [90m0.073s[0m
+[32m  + [0m[32mScala Enums (old and new)[0m [90m0.257s[0m
+[32mco.blocke.dotty_reflection.Collections:[0m
+[32m  + [0m[32mScala List[0m [90m0.192s[0m
+[32m  + [0m[32mScala Set[0m [90m0.237s[0m
+[32m  + [0m[32mScala Map 1[0m [90m0.285s[0m
+[32m  + [0m[32mScala Map 2[0m [90m0.289s[0m
+[32m  + [0m[32mScala mutable List[0m [90m0.292s[0m
+[32m  + [0m[32mScala mutable Set[0m [90m0.152s[0m
+[32m  + [0m[32mScala mutable Map 1[0m [90m0.222s[0m
+[32m  + [0m[32mScala mutable Map 2[0m [90m0.191s[0m
+[32m  + [0m[32mNested Collections[0m [90m0.221s[0m
+[32m  + [0m[32mTuples[0m [90m0.221s[0m
+[32m  + [0m[32mScala Arrays[0m [90m0.37s[0m
+[info] Passed: Total 79, Failed 0, Errors 0, Passed 79
+[success] Total time: 84 s (01:24), completed Jun 3, 2020, 12:38:00 PM

@@ -55,3 +55,5 @@ enum Month {
 // case class Meep( b: Month)
 case class Meep( a: WeekDay, b: Month)
 
+opaque type EMP_ID2 = Person
+case class Employee2(eId: EMP_ID2, age: Int)

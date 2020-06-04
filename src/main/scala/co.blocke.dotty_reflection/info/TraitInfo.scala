@@ -6,12 +6,12 @@ package info
 case class TraitInfo protected[dotty_reflection](
     name: String, 
     orderedTypeParameters: List[TypeSymbol],
-    actualParameterTypes: List[RType]
+    actualParameterTypes: Array[RType]
   ) extends RType: // with ClassOrTrait:
 
   lazy val infoClass: Class[_] = Class.forName(name)
 
-  def setActualTypeParameters( params: List[RType] ) = this.copy(actualParameterTypes = params)
+  def setActualTypeParameters( params: Array[RType] ) = this.copy(actualParameterTypes = params)
   lazy val typedParams = orderedTypeParameters.zip(actualParameterTypes).toMap
 
   def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
@@ -20,7 +20,7 @@ case class TraitInfo protected[dotty_reflection](
 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
     + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}])""" else ")"}
-    + {if actualParameterTypes == Nil then "\n" else ":\n"+ tabs(newTab) + "actualParamTypes:\n" 
+    + {if actualParameterTypes.isEmpty then "\n" else ":\n"+ tabs(newTab) + "actualParamTypes:\n" 
     + both.map( (p,a) => tabs(newTab+1) + s"[$p] "+a.show(newTab+2,true)).mkString}
     // + actualParameterTypes.map(_.show(newTab+1)).mkString+"\n"}
 
@@ -28,7 +28,7 @@ case class TraitInfo protected[dotty_reflection](
 case class SealedTraitInfo protected(
     name: String, 
     orderedTypeParameters: List[TypeSymbol],
-    children: List[RType]
+    children: Array[RType]
   ) extends RType: // with ClassOrTrait:
 
   lazy val infoClass: Class[_] = Class.forName(name)
@@ -37,5 +37,5 @@ case class SealedTraitInfo protected(
     val newTab = {if supressIndent then tab else tab+1}
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
     + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}])""" else ")"}
-    + {if children == Nil then "\n" else ":\n"+ tabs(newTab) + "children:\n" + children.map(_.show(newTab+1)).mkString}
+    + {if children.isEmpty then "\n" else ":\n"+ tabs(newTab) + "children:\n" + children.map(_.show(newTab+1)).mkString}
   
