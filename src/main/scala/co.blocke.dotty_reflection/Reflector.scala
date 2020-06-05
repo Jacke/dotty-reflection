@@ -31,10 +31,15 @@ object Reflector:
     val structure = discoverStructure(reflect)(aType)
     this.synchronized {
       Option(cache.get(structure)).getOrElse{ 
-        cache.put(structure, SelfRefRType(structure.className))
-        val reflectedRtype = TastyReflection(reflect)(aType).reflectOn
-        cache.put(structure, reflectedRtype)
-        reflectedRtype
+        // Any is a special case... It may just be an "Any", or something else, like a opaque type alias.
+        // In either event, we don't want to cache the result.
+        if structure.className == "scala.Any" then
+          TastyReflection(reflect)(aType).reflectOn
+        else
+          cache.put(structure, SelfRefRType(structure.className))
+          val reflectedRtype = TastyReflection(reflect)(aType).reflectOn
+          cache.put(structure, reflectedRtype)
+          reflectedRtype
       }
     }
 

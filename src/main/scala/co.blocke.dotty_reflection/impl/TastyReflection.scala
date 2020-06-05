@@ -45,13 +45,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         // Intersection types don't have a class symbol, so don't assume one!
         case None =>
           typeRef match {
-            // Object (Scala Object)
-            //----------------------------------------
-            case vd: reflect.ValDef if(vd.symbol.flags.is(reflect.Flags.Object)) =>
-              println("Object found!")
-              ObjectInfo(vd.symbol.fullName)
-      
-            // Intersection Type
+             // Intersection Type
             //----------------------------------------
             case AndType(left,right) =>
               val resolvedLeft: RType = reflectOnType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
@@ -78,45 +72,47 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
           }
 
           typeRef match {
-            // Any Type
-            //----------------------------------------
-            case named: dotty.tools.dotc.core.Types.NamedType if classSymbol == Symbol.classSymbol("scala.Any") => 
-              PrimitiveType.Scala_Any
+            case named: dotty.tools.dotc.core.Types.NamedType if classSymbol == Symbol.classSymbol("scala.Any") =>
+              // Scala3 opaque type alias
+              //----------------------------------------
+              if typeRef.isOpaqueAlias then
+              // case named: dotty.tools.dotc.core.Types.NamedType if typeRef.isOpaqueAlias =>
+                println("====> Type Alias: "+typeRef)
+                /*
+                val a = typeRef.translucentSuperType
+                println("TR: "+typeRef)
+                println("Xlucent: "+a)
+                println("Xlucent Widen: "+ a.widen)
+                println("Xlucent Dealias: "+ a.dealias)
+                println("Xlucent Simplified: "+ a.simplified)
+                println("Xlucent Class: "+a.classSymbol.get.fullName)  // scala.Int
+                println("Xlucent Type: "+a.typeSymbol)  // class Int
+                println("Xlucent Term: "+a.termSymbol) // val <none>
+                // println("named: "+named)
+                println("----")
+                println(a.typeSymbol.isTerm)
+                */
+                // match {
+                //   case td: TypeDef => println( Reflector.unwindType(reflect)(td))
+                // }
+                //
+                // GOAL: A reflect.Type object that survives Reflect.unwindType()
+                // def unwindType(reflect: Reflection)(aType: reflect.Type): RType
+                //
 
-            // Scala3 opaque type alias
-            //----------------------------------------
-            case named: dotty.tools.dotc.core.Types.NamedType if typeRef.isOpaqueAlias =>
-              println("====> Type Alias: "+typeRef)
-              /*
-              val a = typeRef.translucentSuperType
-              println("TR: "+typeRef)
-              println("Xlucent: "+a)
-              println("Xlucent Widen: "+ a.widen)
-              println("Xlucent Dealias: "+ a.dealias)
-              println("Xlucent Simplified: "+ a.simplified)
-              println("Xlucent Class: "+a.classSymbol.get.fullName)  // scala.Int
-              println("Xlucent Type: "+a.typeSymbol)  // class Int
-              println("Xlucent Term: "+a.termSymbol) // val <none>
-              // println("named: "+named)
-              println("----")
-              println(a.typeSymbol.isTerm)
-              */
-              // match {
-              //   case td: TypeDef => println( Reflector.unwindType(reflect)(td))
-              // }
-              //
-              // GOAL: A reflect.Type object that survives Reflect.unwindType()
-              // def unwindType(reflect: Reflection)(aType: reflect.Type): RType
-              //
+                // println(a.classSymbol.get.tree.asInstanceOf[TypeDef].rhs)
+                // println(Reflector.unwindType(reflect)(a.typeSymbol))
+                reflectOnType(reflect, paramMap)(typeRef.translucentSuperType.asInstanceOf[reflect.TypeRef]) match {
+                  case t: TypeSymbolInfo => throw new ReflectException("Opaque aliases for type symbols currently unsupported")
+                  case t => 
+                    println("Unwrapped: "+t)
+                    AliasInfo(typeRef.show, t)
+                }
 
-              // println(a.classSymbol.get.tree.asInstanceOf[TypeDef].rhs)
-              // println(Reflector.unwindType(reflect)(a.typeSymbol))
-              reflectOnType(reflect, paramMap)(typeRef.translucentSuperType.asInstanceOf[reflect.TypeRef]) match {
-                case t: TypeSymbolInfo => throw new ReflectException("Opaque aliases for type symbols currently unsupported")
-                case t => 
-                  println("Unwrapped: "+t)
-                  AliasInfo(typeRef.show, t)
-              }
+              // Any Type
+              //----------------------------------------
+              else
+                PrimitiveType.Scala_Any
 
             // Scala3 Tasty-equipped type incl. primitive types
             // Traits and classes w/type parameters are *not* here... they're AppliedTypes

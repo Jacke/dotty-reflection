@@ -3,6 +3,7 @@ package co.blocke.dotty_reflection
 import co.blocke.reflect._
 
 case class HooLoo(name: String, more: HooLoo)
+/*
 case class Person(name: String, age:Int)
 case class Foom[T](a:T)
 
@@ -63,3 +64,4 @@ case class Meep( a: WeekDay, b: Month)
 
 opaque type EMP_ID2 = Person
 case class Employee2(eId: EMP_ID2, age: Int)
+*/
