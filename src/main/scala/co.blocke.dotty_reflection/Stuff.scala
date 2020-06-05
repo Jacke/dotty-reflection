@@ -51,6 +51,12 @@ enum Month {
   case Jan, Feb, Mar
 }
 
+sealed trait Flavor2
+case object Vanilla2 extends Flavor2
+case object Chocolate2 extends Flavor2
+case object Bourbon2 extends Flavor2
+case class FlavorHolder2(f: Flavor2)
+
 // case class Meep( a: WeekDay )
 // case class Meep( b: Month)
 case class Meep( a: WeekDay, b: Month)

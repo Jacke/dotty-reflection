@@ -141,6 +141,7 @@ class ScalaTasty extends munit.FunSuite:
     |   fields:
     |      (0) maybe: Try of scala.Boolean""".stripMargin)
   }
+  */
 
   test("sealed trait with case classes") {
     val result = Reflector.reflectOn[VehicleHolder]
@@ -184,6 +185,7 @@ class ScalaTasty extends munit.FunSuite:
   }
   */
 
+  /*
   test("handle Scala non-case classes") {
     val result = Reflector.reflectOn[FoomNC]
     val target = result.show()

@@ -45,13 +45,21 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         // Intersection types don't have a class symbol, so don't assume one!
         case None =>
           typeRef match {
+            // Object (Scala Object)
+            //----------------------------------------
+            case vd: reflect.ValDef if(vd.symbol.flags.is(reflect.Flags.Object)) =>
+              println("Object found!")
+              ObjectInfo(vd.symbol.fullName)
+      
             // Intersection Type
             //----------------------------------------
             case AndType(left,right) =>
               val resolvedLeft: RType = reflectOnType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
               val resolvedRight: RType = reflectOnType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
               IntersectionInfo(INTERSECTION_CLASS, resolvedLeft, resolvedRight)
-            case u => throw new ReflectException("Unsupported TypeRef: "+typeRef)
+
+            case u => 
+              throw new ReflectException("Unsupported TypeRef: "+typeRef)
           }
 
         case Some(classSymbol) =>
@@ -70,9 +78,16 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
           }
 
           typeRef match {
+            // Any Type
+            //----------------------------------------
+            case named: dotty.tools.dotc.core.Types.NamedType if classSymbol == Symbol.classSymbol("scala.Any") => 
+              PrimitiveType.Scala_Any
+
             // Scala3 opaque type alias
             //----------------------------------------
             case named: dotty.tools.dotc.core.Types.NamedType if typeRef.isOpaqueAlias =>
+              println("====> Type Alias: "+typeRef)
+              /*
               val a = typeRef.translucentSuperType
               println("TR: "+typeRef)
               println("Xlucent: "+a)
@@ -85,6 +100,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
               // println("named: "+named)
               println("----")
               println(a.typeSymbol.isTerm)
+              */
               // match {
               //   case td: TypeDef => println( Reflector.unwindType(reflect)(td))
               // }
@@ -107,14 +123,12 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
             //----------------------------------------
             case named: dotty.tools.dotc.core.Types.NamedType => 
               val isTypeParam = typeRef.typeSymbol.flags.is(Flags.Param)   // Is 'T' or a "real" type?  (true if T)
-              val anySymbol = Symbol.classSymbol("scala.Any")
               classSymbol match {
                 case cs if isTypeParam     => 
                   // See if we can resolve the type symbol
                   paramMap.get(typeRef.name.asInstanceOf[TypeSymbol]).getOrElse(
                     TypeSymbolInfo(typeRef.name)  // TypeSymbols Foo[T] have typeRef of Any
                     )
-                case cs if cs == anySymbol => PrimitiveType.Scala_Any
                 case cs if is2xEnumeration => 
                   val enumerationClassSymbol = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass
                   ScalaEnumerationInfo(typeRef.name, enumerationClassSymbol.fields.map( _.name ))  // get the values of the Enumeration
@@ -167,12 +181,22 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
     if(symbol.flags.is(reflect.Flags.Trait)) then
       // === Trait ===
       val typeSymbols = symbol.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
+      //     >> Sealed Traits
       if symbol.flags.is(reflect.Flags.Sealed) then
+        val kidsRTypes = symbol.children.map{ c => 
+          c.tree match {
+            case b: Bind => ObjectInfo(b.pattern.symbol.fullName)  // sealed object implementation
+            case _ =>   // sealed case class implementation
+              val typeDef: dotty.tools.dotc.ast.Trees.TypeDef[_] = c.tree.asInstanceOf[dotty.tools.dotc.ast.Trees.TypeDef[_]]
+              Reflector.unwindType(reflect)(typeDef.typeOpt.asInstanceOf[reflect.Type])
+          }
+        }
         SealedTraitInfo(
           className, 
           typeSymbols, 
-          symbol.children.map(c => reflectOnClass(reflect, paramMap)(c.tree.asInstanceOf[TypeRef])).toArray)
+          kidsRTypes.toArray)
       else
+        //  >> Normal (unsealed) traits
         TraitInfo(className, typeSymbols, typeSymbols.map(paramMap(_)).toArray) 
 
     else if symbol.flags.is(reflect.Flags.Enum) then // Found top-level enum (i.e. not part of a class), e.g. member of a collection
