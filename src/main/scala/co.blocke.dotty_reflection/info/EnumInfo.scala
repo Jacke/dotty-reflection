@@ -18,7 +18,7 @@ case class ScalaEnumInfo protected[dotty_reflection](
   name: String,
   values: List[String]
 ) extends EnumInfo: 
-  val orderedTypeParameters = Nil
+  lazy val orderedTypeParameters = Nil
 
   lazy val infoClass: Class[_] = Class.forName(name+"$")
 
@@ -42,7 +42,7 @@ case class ScalaEnumerationInfo protected[dotty_reflection](
   name: String,
   values: List[String]
 ) extends EnumInfo:
-  val orderedTypeParameters = Nil
+  lazy val orderedTypeParameters = Nil
 
   lazy val infoClass: Class[_] = Class.forName(name+"$")
 
@@ -63,7 +63,7 @@ case class ScalaEnumerationInfo protected[dotty_reflection](
 case class JavaEnumInfo protected[dotty_reflection](
   name: String
 ) extends RType: 
-  val orderedTypeParameters = Nil
+  lazy val orderedTypeParameters = Nil
 
   lazy val infoClass: Class[_] = Class.forName(name)
 

@@ -1,7 +1,7 @@
 package co.blocke.dotty_reflection
 
 // import impl.ScalaClassInspector
-// import info._ 
+import info._ 
 import impl._
 // import scala.tasty.inspector._
 // import scala.reflect.ClassTag
@@ -70,22 +70,23 @@ object Reflector:
     }
 
 
-    /*
   /** Same as reflectOn, except given a Class object instead of a type, T.
    *  NOTE: If Class is parameterized, this call can't infer the types of the parameters.  In that case, call reflectOnClassWithParams
+   *  NOTE: This is *NOT* a macro!
    */
   def reflectOnClass(clazz: Class[_], prebakedStructure: Option[TypeStructure] = None): RType =
     val className = clazz.getName
     // See if this is a top-level Scala 2 Enumeration... cumbersome, I know...
     val isEnumeration = scala.util.Try(clazz.getMethod("values")).toOption.map( _.getReturnType.getName == "scala.Enumeration$ValueSet").getOrElse(false)
     if isEnumeration then
-      ScalaEnumerationInfo(className, clazz)
+      val enumVals: Set[_] = clazz.getMethod("values").invoke(clazz).asInstanceOf[Set[_]]
+      ScalaEnumerationInfo(className, enumVals.map(_.toString).toList)
     else
       val structure = prebakedStructure.getOrElse(TypeStructure(className,Nil))
       this.synchronized {
         Option(cache.get(structure)).getOrElse{ 
           cache.put(structure, SelfRefRType(className))
-          val tc = new ScalaClassInspector(clazz, Map.empty[TypeSymbol,RType])
+          val tc = new TastyInspection(clazz, Map.empty[TypeSymbol,RType])
           tc.inspect("", List(className))
           val found = tc.inspected
           cache.put(structure, found)
@@ -93,7 +94,7 @@ object Reflector:
         }
       }
 
-
+    /*
   /** Construct a fully-parameterized RType if the class' type params are known */
   def reflectOnClassWithParams(clazz: Class[_], params: List[RType]): RType =
     Option(paramerterizedClassCache.get( (clazz,params) )).getOrElse{

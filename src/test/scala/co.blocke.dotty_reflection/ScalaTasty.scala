@@ -24,7 +24,6 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals(person, Person("Frank",35,5))
   }
 
-  /* TODO
   test("handle match types") {
     val result = Reflector.reflectOn[Definitely] 
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Definitely):
@@ -32,7 +31,6 @@ class ScalaTasty extends munit.FunSuite:
     |      (0) id: scala.Int
     |      (1) stuff: scala.Char""".stripMargin)
   }
-  */
   
   test("process mixins") {
     val m = Reflector.reflectOn[WithMix]
@@ -67,7 +65,6 @@ class ScalaTasty extends munit.FunSuite:
     |      (1) age: scala.Int""".stripMargin)
   }
 
-  /*
   test("opaque type alias is a union type") {
     val result = Reflector.reflectOn[OpaqueUnion] 
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.OpaqueUnion):
@@ -76,7 +73,6 @@ class ScalaTasty extends munit.FunSuite:
     |         left--scala.Int
     |         right--java.lang.String""".stripMargin)
   }
-  */
 
   /*
   test("support value classes") {

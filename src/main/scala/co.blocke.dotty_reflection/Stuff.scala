@@ -33,6 +33,7 @@ If the trait has type params then it is an AppliedType!  Woof!
 
 Same for classes!  Its an Applied type of it has type parameters
 */
+*/
 
 // Scala 2.x style Enumeration
 object WeekDay extends Enumeration {
@@ -46,6 +47,7 @@ object WeekDay extends Enumeration {
   val Sunday = Value(-3)
 }
 import WeekDay._
+/*
 
 // Scala 3 Enum
 enum Month {

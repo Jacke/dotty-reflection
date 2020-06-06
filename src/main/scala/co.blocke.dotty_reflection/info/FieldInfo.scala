@@ -49,7 +49,7 @@ case class ScalaFieldInfo(
       case info => info.infoClass
     }
 
-/* This is also used for Scala plain-class getter/setter fields */
+/* This is also used for plain-class getter/setter fields */
 case class JavaFieldInfo(
   index:           Int,
   name:            String,

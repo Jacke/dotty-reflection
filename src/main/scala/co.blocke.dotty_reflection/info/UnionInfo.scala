@@ -8,7 +8,7 @@ case class UnionInfo protected[dotty_reflection] (
   val _rightType: RType
   ) extends RType:
 
-  val orderedTypeParameters: List[TypeSymbol] = Nil
+  lazy val orderedTypeParameters: List[TypeSymbol] = Nil
 
   lazy val leftType: RType = _leftType match {
     case e: SelfRefRType => e.resolve

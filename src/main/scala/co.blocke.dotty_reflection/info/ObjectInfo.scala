@@ -6,7 +6,7 @@ case class ObjectInfo protected[dotty_reflection](
   ) extends RType:
 
   lazy val infoClass: Class[_] = Class.forName(name)
-  val orderedTypeParameters: List[TypeSymbol] = Nil
+  lazy val orderedTypeParameters: List[TypeSymbol] = Nil
 
   def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)\n"

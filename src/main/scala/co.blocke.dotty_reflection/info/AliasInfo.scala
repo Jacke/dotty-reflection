@@ -10,7 +10,7 @@ case class AliasInfo protected[dotty_reflection] (
 
     lazy val infoClass = unwrappedType.infoClass
 
-    val orderedTypeParameters = List.empty[TypeSymbol] // unused for aliases
+    lazy val orderedTypeParameters = Nil // unused for aliases
 
     def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
       val newTab = {if supressIndent then tab else tab+1}

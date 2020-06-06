@@ -4,7 +4,7 @@ import Clazzes._
 
 enum PrimitiveType(val name: String, val _infoClass: Class[_]) extends RType:
   lazy val infoClass: Class[_] = _infoClass
-  val orderedTypeParameters: List[TypeSymbol] = Nil
+  lazy val orderedTypeParameters: List[TypeSymbol] = Nil
 
   case Scala_Boolean extends PrimitiveType("scala.Boolean", BooleanClazz)
   case Scala_Byte    extends PrimitiveType("scala.Byte", ByteClazz)

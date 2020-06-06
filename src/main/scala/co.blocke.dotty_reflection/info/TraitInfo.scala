@@ -5,10 +5,11 @@ package info
 
 case class TraitInfo protected[dotty_reflection](
     name: String, 
-    orderedTypeParameters: List[TypeSymbol],
+    _orderedTypeParameters: List[TypeSymbol],
     actualParameterTypes: Array[RType]
   ) extends RType: // with ClassOrTrait:
 
+  lazy val orderedTypeParameters = _orderedTypeParameters
   lazy val infoClass: Class[_] = Class.forName(name)
 
   def setActualTypeParameters( params: Array[RType] ) = this.copy(actualParameterTypes = params)
@@ -27,10 +28,11 @@ case class TraitInfo protected[dotty_reflection](
 
 case class SealedTraitInfo protected(
     name: String, 
-    orderedTypeParameters: List[TypeSymbol],
+    _orderedTypeParameters: List[TypeSymbol],
     children: Array[RType]
   ) extends RType: // with ClassOrTrait:
 
+  lazy val orderedTypeParameters = _orderedTypeParameters
   lazy val infoClass: Class[_] = Class.forName(name)
 
   def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 

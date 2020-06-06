@@ -6,24 +6,13 @@ import info._
 import scala.quoted._
 import scala.reflect._
 import scala.tasty.Reflection
+import scala.util.Try
   
 
 case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
   // extends ScalaClassReflectorLike:
   // with ParamGraph:
   import reflect.{_, given _}
-
-  // def reflectOn(qctx: QuoteContext)(aType: qctx.tasty.Type): RType =
-  //   qctx.tasty.rootContext match {
-  //     case ctx if ctx.isJavaCompilationUnit() => JavaClassInspector.inspectClass(clazz, initialParamMap)      
-  //     case ctx if ctx.isScala2CompilationUnit() => UnknownInfo(clazz)  // Can't do much with Scala2 classes--not Tasty
-  //     case ctx if ctx.isAlreadyLoadedCompilationUnit() => 
-  //       ExtractorRegistry.extractors.collectFirst {
-  //         case e if e.matches(clazz) => inspected = e.emptyInfo(clazz, initialParamMap)
-  //       }
-  //     case _ => inspectClass(clazz.getName, reflect, initialParamMap)(root)
-  //   }
-  //   BogusInfo()
 
   val className =
     aType match {
@@ -76,38 +65,8 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
               // Scala3 opaque type alias
               //----------------------------------------
               if typeRef.isOpaqueAlias then
-              // case named: dotty.tools.dotc.core.Types.NamedType if typeRef.isOpaqueAlias =>
-                println("====> Type Alias: "+typeRef)
-                /*
-                val a = typeRef.translucentSuperType
-                println("TR: "+typeRef)
-                println("Xlucent: "+a)
-                println("Xlucent Widen: "+ a.widen)
-                println("Xlucent Dealias: "+ a.dealias)
-                println("Xlucent Simplified: "+ a.simplified)
-                println("Xlucent Class: "+a.classSymbol.get.fullName)  // scala.Int
-                println("Xlucent Type: "+a.typeSymbol)  // class Int
-                println("Xlucent Term: "+a.termSymbol) // val <none>
-                // println("named: "+named)
-                println("----")
-                println(a.typeSymbol.isTerm)
-                */
-                // match {
-                //   case td: TypeDef => println( Reflector.unwindType(reflect)(td))
-                // }
-                //
-                // GOAL: A reflect.Type object that survives Reflect.unwindType()
-                // def unwindType(reflect: Reflection)(aType: reflect.Type): RType
-                //
-
-                // println(a.classSymbol.get.tree.asInstanceOf[TypeDef].rhs)
-                // println(Reflector.unwindType(reflect)(a.typeSymbol))
-                reflectOnType(reflect, paramMap)(typeRef.translucentSuperType.asInstanceOf[reflect.TypeRef]) match {
-                  case t: TypeSymbolInfo => throw new ReflectException("Opaque aliases for type symbols currently unsupported")
-                  case t => 
-                    println("Unwrapped: "+t)
-                    AliasInfo(typeRef.show, t)
-                }
+                val translucentSuperType = typeRef.translucentSuperType
+                AliasInfo(typeRef.show, Reflector.unwindType(reflect)(translucentSuperType))
 
               // Any Type
               //----------------------------------------
@@ -200,7 +159,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
       val enumValues = enumClassSymbol.children.map(_.name)
       ScalaEnumInfo(symbol.name, enumValues)
 
-    // Case Classes
+    // === Case Classes ===
     else if symbol.flags.is(reflect.Flags.Case) then
       // Get field annotatations (from body of class--they're not on the constructor fields)
       val classDef = symbol.tree.asInstanceOf[ClassDef]
@@ -241,7 +200,16 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         classDef.parents.map(_.symbol.fullName), 
         false)
 
-    // Other kinds of classes (Java, non-case Scala)
+    // === Java Class ===
+    // User-written Java classes will have the source file.  Java library files will have <no file> for source
+    else if symbol.pos.sourceFile.toString.endsWith(".java") || symbol.pos.sourceFile.toString == "<no file>" then
+      // Reflecting Java classes requires the materialized Class, which may be available (e.g. Java collections) or not (e.g. user-written class).
+      // See if we can get it...  If not create a proxy.
+      scala.util.Try {
+        JavaClassInspector.inspectClass(Class.forName(symbol.fullName), paramMap)
+      }.toOption.getOrElse(JavaClassInfo(symbol.fullName))
+
+    // === Other kinds of classes (non-case Scala) ===
     else
       UnknownInfo(symbol.fullName)
 
