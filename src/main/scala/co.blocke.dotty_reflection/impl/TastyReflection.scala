@@ -2,7 +2,7 @@ package co.blocke.dotty_reflection
 package impl
 
 import info._
-// import extractors._
+import extractors._
 import scala.quoted._
 import scala.reflect._
 import scala.tasty.Reflection
@@ -10,8 +10,6 @@ import scala.util.Try
 
 
 case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
-  // extends ScalaClassReflectorLike:
-  // with ParamGraph:
   import reflect.{_, given _}
 
   val className =
@@ -107,19 +105,15 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
             // Most other "normal" Types
             //----------------------------------------
             case a @ AppliedType(t,tob) => 
-              /*
               val foundType: Option[RType] = ExtractorRegistry.extractors.collectFirst {
-                case e if e.matches(reflect)(classSymbol) => e.extractInfo(reflect, paramMap)(t, tob, classSymbol, this)   
+                case e if e.matches(reflect)(classSymbol) => e.extractInfo(reflect, paramMap)(t, tob, classSymbol)   
               }
               foundType.getOrElse{
-              */
-              // Some other class we need to descend into, including a parameterized Scala class
-              val actualArgRTypes = a.args.map( arg => Reflector.unwindType(reflect)(arg.asInstanceOf[Type]) )
-              val typeSymbols = a.tycon.classSymbol.get.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
-              reflectOnClass(reflect, typeSymbols.zip(actualArgRTypes).toMap)(t.asInstanceOf[TypeRef])
-              /*
+                // Some other class we need to descend into, including a parameterized Scala class
+                val actualArgRTypes = a.args.map( arg => Reflector.unwindType(reflect)(arg.asInstanceOf[Type]) )
+                val typeSymbols = a.tycon.classSymbol.get.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
+                reflectOnClass(reflect, typeSymbols.zip(actualArgRTypes).toMap)(t.asInstanceOf[TypeRef])
               }
-              */
           
             case x => 
               println("oops... "+x)

@@ -12,6 +12,15 @@ import scala.tasty.Reflection
 
 case class TypeStructure( className: String, params: List[TypeStructure] )
 
+/*  Maybe a cool way to involke a constructor from within a macro???
+run {
+  val qctx = summon[QuoteContext]
+  import qctx.tasty.{_,given}
+  val constr = typeOf[Tuple1[Int]].classSymbol.get.tree.asInstanceOf[ClassDef].constructor.symbol
+  New(Inferred(typeOf[Tuple1[Int]])).select(constr).appliedToType(typeOf[Int]).appliedTo(Literal(Constant(1))).seal
+}
+*/
+
 object Reflector:
 
   //------------------------
@@ -19,11 +28,40 @@ object Reflector:
   //------------------------
   inline def reflectOn[T]: RType = ${ reflectOnImpl[T]() }
 
-  def reflectOnImpl[T]()(implicit qctx: QuoteContext, ttype:scala.quoted.Type[T]): Expr[RType] = 
+  def reflectOnImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[RType] = 
     import qctx.tasty.{_, given _}
 
     Expr( unwindType(qctx.tasty)(typeOf[T]) )
 
+
+  //------------------------
+  //  <<  MACRO ENTRY >>
+  //------------------------
+  // inline def getTypeOf[T]: scala.quoted.Type[T] = ${ getTypeOfImpl[T]() }
+
+  // def getTypeOfImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[scala.quoted.Type[T]] = 
+  //   implicit val liftable: Liftable[quoted.Type[T]] = new Liftable[quoted.Type[T]] {
+  //     def toExpr(x: quoted.Type[T]) =
+  //       '{ deserialize(${Expr(serialize(x)) }).asInstanceOf[quoted.Type[T]] }
+  //   }
+  //   Expr( ttype )
+  /*
+  inline def isSubclassOf[T](t: scala.quoted.Type[_]): Boolean = ${ isSubclassOfImpl[T]( '{t} ) }
+
+  def isSubclassOfImpl[T](t: Expr[scala.quoted.Type[_]])(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[Boolean] = 
+    import qctx.tasty.{_, given _}
+    // implicit val liftable: Liftable[quoted.Type[_]] = new Liftable[quoted.Type[_]] {
+    //   def toExpr(x: quoted.Type[_]) =
+    //     '{ deserialize(${Expr(serialize(x)) }).asInstanceOf[quoted.Type[_]] }
+    // }
+    println("In here >>> "+t)
+    Expr(true)
+    // Expr( t.asInstanceOf[qctx.tasty.Type] <:< typeOf[T] )
+    */
+
+
+
+  //============================== Support Functions ===========================//
 
   def unwindType(reflect: Reflection)(aType: reflect.Type): RType =
     import reflect.{_, given _}

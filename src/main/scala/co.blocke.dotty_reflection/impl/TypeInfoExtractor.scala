@@ -13,6 +13,5 @@ trait TypeInfoExtractor[T <: RType]:
   def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
     t: reflect.Type, 
     tob: List[reflect.TypeOrBounds], 
-    symbol: reflect.Symbol,
-    typeInspector: ScalaClassInspectorLike): RType
+    symbol: reflect.Symbol): RType
 
