@@ -26,7 +26,7 @@ object JavaClassInspector:
       case _ =>
         val annos:List[Annotation] = c.getAnnotations.toList
         val allAnnos = annos.map(a => parseAnno(a)).toMap
-        JavaClassInfoProxy(c.getName,  parseFields(c, paramMap).toArray, typeParamSymbols(c), allAnnos, Nil)
+        JVMClassInfoProxy(c.getName,  parseFields(c, paramMap).toArray, typeParamSymbols(c), allAnnos)
     }
 
   private def parseAnno( annoClass: Annotation): (String,Map[String,String]) = 

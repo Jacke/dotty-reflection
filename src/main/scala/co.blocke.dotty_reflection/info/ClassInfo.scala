@@ -107,7 +107,7 @@ case class ScalaClassInfo protected[dotty_reflection] (
  */
 case class JavaClassInfo protected[dotty_reflection] ( name: String ) extends ClassInfo:
   lazy val infoClass: Class[_] = Class.forName(name)
-  private lazy val proxy = impl.JavaClassInspector.inspectClass(infoClass, Map.empty[TypeSymbol, RType]).asInstanceOf[JavaClassInfoProxy]
+  private lazy val proxy = impl.JavaClassInspector.inspectClass(infoClass, Map.empty[TypeSymbol, RType]).asInstanceOf[JVMClassInfoProxy]
   lazy val fields = proxy.fields
   lazy val orderedTypeParameters: List[TypeSymbol]                = proxy.orderedTypeParameters
   lazy val typeMembers:           List[TypeMemberInfo]            = proxy.typeMembers
@@ -127,18 +127,28 @@ case class JavaClassInfo protected[dotty_reflection] ( name: String ) extends Cl
     + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
   
 
-case class JavaClassInfoProxy protected[dotty_reflection] (
+case class JVMClassInfoProxy protected[dotty_reflection] (
     name:                   String,
     _fields:                Array[FieldInfo],
     _orderedTypeParameters: List[TypeSymbol],
-    _annotations:           Map[String, Map[String,String]],
-    _mixins:                List[String]
+    _annotations:           Map[String, Map[String,String]]
   ) extends RType:
 
   lazy val annotations = _annotations
-  lazy val mixins = _mixins
   lazy val orderedTypeParameters = _orderedTypeParameters
   lazy val infoClass: Class[_] = Class.forName(name)
+
+  // Run up the interitance tree to the top (Object) to get all the superclasses and mixin interfaces of this one
+  private def getSuperclasses(c: Class[_] = infoClass, stack:List[String] = List.empty[String]): List[String] = 
+    val ammendedStack = (stack :+ c.getName) ::: c.getInterfaces.toList.map(_.getName)
+    val sc = c.getSuperclass()
+    if( sc == classOf[Object] || sc == null)
+      ammendedStack
+    else 
+      getSuperclasses(sc, ammendedStack)
+
+  lazy val mixins = getSuperclasses()
+ 
 
   // Fields may be self-referencing, so we need to unwind this...
   lazy val fields = _fields.map( f => f.fieldType match {
@@ -148,4 +158,5 @@ case class JavaClassInfoProxy protected[dotty_reflection] (
 
   val typeMembers: List[TypeMemberInfo] = Nil  // unused for Java classes but needed on ClassInfo
 
-  def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = "" // not used
+  def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)\n"

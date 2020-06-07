@@ -7,7 +7,7 @@ import scala.quoted._
 import scala.reflect._
 import scala.tasty.Reflection
 import scala.util.Try
-  
+
 
 case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
   // extends ScalaClassReflectorLike:
@@ -37,8 +37,8 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
              // Intersection Type
             //----------------------------------------
             case AndType(left,right) =>
-              val resolvedLeft: RType = reflectOnType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
-              val resolvedRight: RType = reflectOnType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
+              val resolvedLeft: RType = Reflector.unwindType(reflect)(left.asInstanceOf[reflect.TypeRef])
+              val resolvedRight: RType = Reflector.unwindType(reflect)(right.asInstanceOf[reflect.TypeRef])
               IntersectionInfo(INTERSECTION_CLASS, resolvedLeft, resolvedRight)
 
             case u => 
@@ -131,6 +131,14 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
   private def reflectOnClass(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(typeRef: reflect.TypeRef): RType = 
     import reflect.{_, given _}
 
+    object DefaultMethod {
+      val reg = """\$lessinit\$greater\$default\$(\d+)""".r
+      def unapply(s: reflect.Symbol): Option[Int] = reg.findFirstIn(s.toString) match {
+        case Some(reg(a)) => Some(a.toInt)
+        case _ => None
+      }
+    }
+
     val symbol = typeRef.classSymbol.get
  
     if(symbol.flags.is(reflect.Flags.Trait)) then
@@ -174,6 +182,10 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         }).toMap)
       }.toMap
 
+      val isValueClass = classDef.parents.collectFirst {
+        case t:TypeTree if t.tpe.typeSymbol.name == "AnyVal" => t
+      }.isDefined
+
       // Get superclass' field annotations--if any
       val dad = classDef.parents.head match {
         case tt: TypeTree => 
@@ -183,13 +195,19 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
           }
         case _ => None
       }
+
+      // Get any case field default value accessor method names (map by field index)
+      val fieldDefaultMethods = symbol.companionClass.methods.collect {
+        case DefaultMethod(defaultIndex) => defaultIndex-1 -> (className+"$", ("$lessinit$greater$default$"+defaultIndex))
+      }.toMap
+
       // All this mucking around in the constructor.... why not just get the case fields from the symbol?
       // Because:  symbol's case fields lose the annotations!  Pulling from contstructor ensures they are retained.
       val constructorParamz = classDef.constructor.paramss
       val classMembers = classDef.body.collect {
         case vd: reflect.ValDef => vd
       }.map(f => (f.name->f)).toMap
-      val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2, dad) )
+      val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2, dad, fieldDefaultMethods) )
 
       ScalaCaseClassInfo(
         className, 
@@ -198,7 +216,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         caseFields.toArray, 
         classAnnos, 
         classDef.parents.map(_.symbol.fullName), 
-        false)
+        isValueClass)
 
     // === Java Class ===
     // User-written Java classes will have the source file.  Java library files will have <no file> for source
@@ -214,7 +232,12 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
       UnknownInfo(symbol.fullName)
 
 
-  private def reflectOnField(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(valDef: reflect.ValDef, index: Int, dad: Option[ClassInfo]): FieldInfo = 
+  private def reflectOnField(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
+    valDef: reflect.ValDef, 
+    index: Int, 
+    dad: Option[ClassInfo],
+    fieldDefaultMethods: Map[Int, (String,String)]
+  ): FieldInfo = 
     val fieldAnnos = {
       val baseAnnos = dad.flatMap( _.fields.find(_.name == valDef.name) ).map(_.annotations).getOrElse(Map.empty[String,Map[String,String]])
       baseAnnos ++ valDef.symbol.annots.map{ a => 
@@ -225,5 +248,21 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         }).toMap)
       }.toMap
     }
+
     val fieldType = Reflector.unwindType(reflect)(valDef.tpt.tpe)
-    ScalaFieldInfo(index, valDef.name, fieldType, fieldAnnos, null, None, None)
+
+    // See if there's default values specified -- look for gonzo method on companion class.  If exists, default value is available.
+    // val defaultAccessor = 
+    //   fieldType match {
+    //     case _: TypeSymbolInfo => None
+    //     case _ =>
+    //       scala.util.Try{
+    //         val companionClazz = Class.forName(className+"$") // This will fail for non-case classes, including Java classes
+    //         val defaultMethod = companionClazz.getMethod("$lessinit$greater$default$"+(index+1)) // This will fail if there's no default value for this field
+    //         val const = companionClazz.getDeclaredConstructor()
+    //         const.setAccessible(true)
+    //         ()=>defaultMethod.invoke(const.newInstance())
+    //       }.toOption
+    //   }
+
+    ScalaFieldInfo(index, valDef.name, fieldType, fieldAnnos, null, fieldDefaultMethods.get(index), None)

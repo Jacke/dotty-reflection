@@ -10,7 +10,7 @@ trait FieldInfo extends Serializable:
   val originalSymbol:       Option[TypeSymbol]
   val annotations:          Map[String,Map[String,String]]
   val valueAccessor:        Method
-  val defaultValueAccessor: Option[()=>Object]
+  lazy val defaultValue:    Option[Object]
 
   def reIndex(i: Int): FieldInfo
 
@@ -25,18 +25,26 @@ trait FieldInfo extends Serializable:
 
 
 case class ScalaFieldInfo(
-  index:                Int,
-  name:                 String,
-  fieldType:            RType,
-  annotations:          Map[String,Map[String,String]],
-  valueAccessor:        Method,
-  defaultValueAccessor: Option[()=>Object],
-  originalSymbol:       Option[TypeSymbol]
+  index:                    Int,
+  name:                     String,
+  fieldType:                RType,
+  annotations:              Map[String,Map[String,String]],
+  valueAccessor:            Method,
+  defaultValueAccessorName: Option[(String,String)], // (class, method)  //Option[()=>Object],
+  originalSymbol:           Option[TypeSymbol]
 ) extends FieldInfo:
   def valueOf(target: Object) = valueAccessor.invoke(target)
   def constructorClass: Class[_] = constructorClassFor(fieldType)
 
   def reIndex(i: Int): FieldInfo = this.copy(index = i)
+
+  lazy val defaultValue: Option[Object] = defaultValueAccessorName.map{ (companionClass, accessor) =>
+    val companion = Class.forName(companionClass)
+    val cons = companion.getDeclaredConstructors()
+    cons(0).setAccessible(true)
+    val companionInst = cons(0).newInstance()
+    companion.getMethod(accessor).invoke(companionInst)
+  }
 
   private def constructorClassFor(t: RType): Class[_] = 
     t match {
@@ -59,6 +67,6 @@ case class JavaFieldInfo(
   valueSetter:     Method,
   originalSymbol:  Option[TypeSymbol]
 ) extends FieldInfo:
-  val defaultValueAccessor = None
+  lazy val defaultValue = None
   def reIndex(i: Int): FieldInfo = this.copy(index = i)
 

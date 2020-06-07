@@ -74,7 +74,6 @@ class ScalaTasty extends munit.FunSuite:
     |         right--java.lang.String""".stripMargin)
   }
 
-  /*
   test("support value classes") {
     val result = Reflector.reflectOn[Employee2]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Employee2):
@@ -92,10 +91,11 @@ class ScalaTasty extends munit.FunSuite:
     |      (0) a: scala.Int
     |      (1) b: java.lang.String""".stripMargin)
     val wd = result.asInstanceOf[ScalaCaseClassInfo]
-    val newWd = wd.constructWith[WithDefault](List(5,wd.fields(1).defaultValueAccessor.get()))
+    val newWd = wd.constructWith[WithDefault](List(5,wd.fields(1).defaultValue.get))
     assertEquals(newWd, WithDefault(5))
   }
 
+  /*
   test("plain class support") {
     val result = Reflector.reflectOn[PlainGood]
     assertEquals( result.show(), """ScalaClassInfo(co.blocke.dotty_reflection.PlainGood):
@@ -127,7 +127,7 @@ class ScalaTasty extends munit.FunSuite:
 
   test("unknown class") {
     val result = Reflector.reflectOn[scala.math.BigDecimal]
-    assertEquals( result.show(), """UnknownInfo(scala.math.BigDecimal)""")
+    assertEquals( result.show(), """JVMClassInfoProxy(scala.math.BigDecimal)""")
   }
 
   /*
@@ -168,7 +168,6 @@ class ScalaTasty extends munit.FunSuite:
     |            ObjectInfo(co.blocke.dotty_reflection.Bourbon)""".stripMargin)
   }
 
-  /*
   test("handle intersection types") {
     val result = Reflector.reflectOn[IntersectionHolder]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.IntersectionHolder):
@@ -179,7 +178,6 @@ class ScalaTasty extends munit.FunSuite:
     |            right--TraitInfo(co.blocke.dotty_reflection.InterB)
     |         right--TraitInfo(co.blocke.dotty_reflection.InterC)""".stripMargin)
   }
-  */
 
   /*
   test("handle Scala non-case classes") {
