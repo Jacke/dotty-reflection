@@ -158,6 +158,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
 
     else if symbol.flags.is(reflect.Flags.Enum) then // Found top-level enum (i.e. not part of a class), e.g. member of a collection
       val enumClassSymbol = typeRef.classSymbol.get
+      enumClassSymbol.companionClass.methods // <-- This shouldn't "do" anything!  For some reason it is needed or Enums test explodes.
       val enumValues = enumClassSymbol.children.map(_.name)
       ScalaEnumInfo(symbol.name, enumValues)
 

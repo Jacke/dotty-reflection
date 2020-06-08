@@ -3,11 +3,11 @@ package info
 
 case class TupleInfo protected[dotty_reflection](
   name: String,
-  infoClass: Class[_],
-  _tupleTypes: List[RType]
+  _tupleTypes: Array[RType]
 ) extends RType:
 
-  val orderedTypeParameters = infoClass.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
+  lazy val orderedTypeParameters = infoClass.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
+  lazy val infoClass: Class[_] = Class.forName(name)
 
   // Elements may be self-referencing, so we need to unwind this...
   lazy val tupleTypes = _tupleTypes.map( _ match {

@@ -5,16 +5,16 @@ import scala.util.Try
 
 case class TryInfo protected[dotty_reflection](
   name: String,
-  infoClass: Class[_],
   _tryType: RType
 ) extends RType:
 
+  lazy val infoClass: Class[_] = Class.forName(name)
   lazy val tryType: RType = _tryType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
 
-  val orderedTypeParameters = infoClass.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
+  lazy val orderedTypeParameters = infoClass.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
 
   def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}

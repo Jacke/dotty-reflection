@@ -20,7 +20,6 @@ class Collections extends munit.FunSuite:
     |      (0) a: SeqLikeInfo(scala.collection.immutable.HashSet[A]): java.lang.String""".stripMargin)
   }
 
-  /*
   test("Scala Map 1") {
     val result = Reflector.reflectOn[Coll3]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Coll3):
@@ -38,7 +37,6 @@ class Collections extends munit.FunSuite:
     |         java.lang.String
     |         scala.Boolean""".stripMargin)  
   }
-  */
 
   test("Scala mutable List") {
     val result = Reflector.reflectOn[Coll1m]
@@ -54,7 +52,6 @@ class Collections extends munit.FunSuite:
     |      (0) a: SeqLikeInfo(scala.collection.mutable.HashSet[A]): java.lang.String""".stripMargin)
   }
 
-  /*
   test("Scala mutable Map 1") {
     val result = Reflector.reflectOn[Coll3m]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Coll3m):
@@ -111,4 +108,3 @@ class Collections extends munit.FunSuite:
     |      (8) x8: array of scala.Short
     |      (9) x9: array of java.lang.String""".stripMargin)
   }
-  */
