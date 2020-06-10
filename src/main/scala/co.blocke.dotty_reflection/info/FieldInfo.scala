@@ -9,7 +9,7 @@ trait FieldInfo extends Serializable:
   val fieldType:            RType
   val originalSymbol:       Option[TypeSymbol]
   val annotations:          Map[String,Map[String,String]]
-  val valueAccessor:        Method
+  lazy val valueAccessor:   Method
   lazy val defaultValue:    Option[Object]
 
   def reIndex(i: Int): FieldInfo
@@ -29,12 +29,13 @@ case class ScalaFieldInfo(
   name:                     String,
   fieldType:                RType,
   annotations:              Map[String,Map[String,String]],
-  valueAccessor:            Method,
   defaultValueAccessorName: Option[(String,String)], // (class, method)  //Option[()=>Object],
   originalSymbol:           Option[TypeSymbol]
 ) extends FieldInfo:
+
   def valueOf(target: Object) = valueAccessor.invoke(target)
   def constructorClass: Class[_] = constructorClassFor(fieldType)
+  lazy val valueAccessor: Method = fieldType.infoClass.getMethod(name)
 
   def reIndex(i: Int): FieldInfo = this.copy(index = i)
 
@@ -63,10 +64,11 @@ case class JavaFieldInfo(
   name:            String,
   fieldType:       RType,
   annotations:     Map[String,Map[String,String]],
-  valueAccessor:   Method,
+  _valueAccessor:  Method,
   valueSetter:     Method,
   originalSymbol:  Option[TypeSymbol]
 ) extends FieldInfo:
   lazy val defaultValue = None
+  lazy val valueAccessor = _valueAccessor
   def reIndex(i: Int): FieldInfo = this.copy(index = i)
 

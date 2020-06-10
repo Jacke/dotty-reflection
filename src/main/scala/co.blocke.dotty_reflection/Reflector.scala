@@ -105,6 +105,10 @@ object Reflector:
         val resolvedLeft = discoverStructure(reflect)(left.asInstanceOf[Type])
         val resolvedRight = discoverStructure(reflect)(right.asInstanceOf[Type])
         TypeStructure(INTERSECTION_CLASS, List(resolvedLeft, resolvedRight))
+      case z @ TermRef(tob, name) =>
+        println(s"TERM FOUND $name >>> "+tob)
+        println("Z: "+z)
+        TypeStructure(name, Nil)
     }
 
 

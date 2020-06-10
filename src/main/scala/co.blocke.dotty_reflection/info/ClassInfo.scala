@@ -4,8 +4,8 @@ package info
 // import impl.ClassOrTrait
 
 trait ClassInfo extends RType: // TODO with ClassOrTrait:
-  val name:                  String
-  lazy val fields:           Array[FieldInfo]
+  val name:                       String
+  lazy val fields:                Array[FieldInfo]
   lazy val orderedTypeParameters: List[TypeSymbol]
   lazy val typeMembers:           List[TypeMemberInfo]
   lazy val annotations:           Map[String, Map[String,String]]
@@ -59,19 +59,25 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
 
 //------------------------------------------------------------
 
-/*
 
 case class ScalaClassInfo protected[dotty_reflection] (
-    name:                  String,
-    infoClass:             Class[_],
-    orderedTypeParameters: List[TypeSymbol],
-    typeMembers:           List[TypeMemberInfo],
-    _fields:               List[FieldInfo],  // constructor fields
-    nonConstructorFields:  List[FieldInfo],
-    annotations:           Map[String, Map[String,String]],
-    isValueClass:          Boolean
+    name:                   String,
+    _orderedTypeParameters: List[TypeSymbol],
+    _typeMembers:           List[TypeMemberInfo],
+    _fields:                Array[FieldInfo],  // constructor fields
+    nonConstructorFields:   Array[FieldInfo],
+    _annotations:           Map[String, Map[String,String]],
+    _mixins:                List[String],
+    isValueClass:           Boolean
   ) extends ClassInfo:
 
+  // All this laziness is because Java classes use a proxy that isn't resolved until runtime.
+  lazy val orderedTypeParameters = _orderedTypeParameters
+  lazy val typeMembers = _typeMembers
+  lazy val annotations = _annotations
+  lazy val mixins = _mixins
+  lazy val infoClass: Class[_] = Class.forName(name)
+ 
   // Fields may be self-referencing, so we need to unwind this...
   lazy val fields = _fields.map( f => f.fieldType match {
     case s: SelfRefRType => f.asInstanceOf[ScalaFieldInfo].copy(fieldType = s.resolve)
@@ -81,11 +87,11 @@ case class ScalaClassInfo protected[dotty_reflection] (
   lazy val constructor = 
     infoClass.getConstructor(fields.map(_.asInstanceOf[ScalaFieldInfo].constructorClass):_*)
     
-  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(typeMembers = actuals)
+  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals)
 
   // Used for ScalaJack writing of type members ("external type hints").  If some type members are not class/trait, it messes up any
   // type hint modifiers, so for the purposes of serialization we want to filter out "uninteresting" type members (e.g. primitives)
-  def filterTraitTypeParams: ScalaClassInfo = this.copy( typeMembers = typeMembers.filter(tm => tm.memberType.isInstanceOf[TraitInfo] || tm.memberType.isInstanceOf[ScalaCaseClassInfo]) )
+  def filterTraitTypeParams: ScalaClassInfo = this.copy( _typeMembers = typeMembers.filter(tm => tm.memberType.isInstanceOf[TraitInfo] || tm.memberType.isInstanceOf[ScalaCaseClassInfo]) )
 
   def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
@@ -98,9 +104,10 @@ case class ScalaClassInfo protected[dotty_reflection] (
     + tabs(newTab) + "non-constructor fields:\n" + showNCFields.map(_.show(newTab+1, supressIndent, modified)).mkString
     + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
     + {if( typeMembers.nonEmpty ) tabs(newTab) + "type members:\n" + typeMembers.map(_.show(newTab+1)).mkString else ""}
-*/
+
 
 //------------------------------------------------------------
+
 
 /** Java class reflection has a special problem... we need the class file, which isn't available during compilation (i.e. inside a macro).
  *  The best we can do is capture the name of the class and materialize/reflect on the class outside of the macro, lazy-like.

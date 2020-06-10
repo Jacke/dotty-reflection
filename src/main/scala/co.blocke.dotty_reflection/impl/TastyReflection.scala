@@ -9,7 +9,7 @@ import scala.tasty.Reflection
 import scala.util.Try
 
 
-case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
+case class TastyReflection(reflect: Reflection)(aType: reflect.Type) extends NonCaseClassInspector:
   import reflect.{_, given _}
 
   val className =
@@ -24,7 +24,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
     reflectOnType(reflect, Map.empty[TypeSymbol,RType])(aType.asInstanceOf[TypeRef])
 
 
-  private def reflectOnType(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(typeRef: reflect.TypeRef): RType = 
+  protected def reflectOnType(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(typeRef: reflect.TypeRef): RType = 
     import reflect.{_, given _}
 
       typeRef.classSymbol match {
@@ -32,12 +32,19 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         // Intersection types don't have a class symbol, so don't assume one!
         case None =>
           typeRef match {
-             // Intersection Type
+            // Intersection Type
             //----------------------------------------
             case AndType(left,right) =>
               val resolvedLeft: RType = Reflector.unwindType(reflect)(left.asInstanceOf[reflect.TypeRef])
               val resolvedRight: RType = Reflector.unwindType(reflect)(right.asInstanceOf[reflect.TypeRef])
               IntersectionInfo(INTERSECTION_CLASS, resolvedLeft, resolvedRight)
+
+            // Union Type
+            //----------------------------------------
+            case OrType(left,right) =>
+              val resolvedLeft: RType = Reflector.unwindType(reflect)(left.asInstanceOf[reflect.TypeRef])
+              val resolvedRight: RType = Reflector.unwindType(reflect)(right.asInstanceOf[reflect.TypeRef])
+              UnionInfo(UNION_CLASS, resolvedLeft, resolvedRight)
 
             case u => 
               throw new ReflectException("Unsupported TypeRef: "+typeRef)
@@ -162,7 +169,89 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
       val enumValues = enumClassSymbol.children.map(_.name)
       ScalaEnumInfo(symbol.name, enumValues)
 
+    // === Java Class ===
+    // User-written Java classes will have the source file.  Java library files will have <no file> for source
+    else if symbol.pos.sourceFile.toString.endsWith(".java") || symbol.pos.sourceFile.toString == "<no file>" then
+      // Reflecting Java classes requires the materialized Class, which may be available (e.g. Java collections) or not (e.g. user-written class).
+      // See if we can get it...  If not create a proxy.
+      scala.util.Try {
+        JavaClassInspector.inspectClass(Class.forName(symbol.fullName), paramMap)
+      }.toOption.getOrElse(JavaClassInfo(symbol.fullName))
+
+    // === Scala Classes ===
+    else if symbol.isClassDef then
+      // Get field annotatations (from body of class--they're not on the constructor fields)
+      val classDef = symbol.tree.asInstanceOf[ClassDef]
+
+      // Class annotations -> annotation map
+      val annoSymbol = symbol.annots.filter( a => !a.symbol.signature.resultSig.startsWith("scala.annotation.internal."))
+      val classAnnos = annoSymbol.map{ a => 
+        val reflect.Apply(_, params) = a
+        val annoName = a.symbol.signature.resultSig
+        (annoName,(params collect {
+          case NamedArg(argName, Literal(Constant(argValue))) => (argName.toString, argValue.toString)
+        }).toMap)
+      }.toMap
+
+      val isValueClass = classDef.parents.collectFirst {
+        case t:TypeTree if t.tpe.typeSymbol.name == "AnyVal" => t
+      }.isDefined
+
+      // Get superclass' field annotations--if any
+      val dad = classDef.parents.headOption match {
+        case Some(tt: TypeTree) => 
+          reflectOnClass(reflect,paramMap)(tt.tpe.asInstanceOf[TypeRef]) match {
+            case ci: ClassInfo => Some(ci) // Any kind of class
+            case _ => None // e.g. Unknown
+          }
+        case _ => None
+      }
+
+      val constructorParamz = classDef.constructor.paramss
+      // Get any case field default value accessor method names (map by field index)
+      val fieldDefaultMethods = symbol.companionClass match {
+        case dotty.tools.dotc.core.Symbols.NoSymbol => Map.empty[Int, (String,String)]
+        case s: Symbol => symbol.companionClass.methods.collect {
+          case DefaultMethod(defaultIndex) => defaultIndex-1 -> (className+"$", ("$lessinit$greater$default$"+defaultIndex))
+        }.toMap
+      }
+
+      // All this mucking around in the constructor.... why not just get the case fields from the symbol?
+      // Because:  symbol's case fields lose the annotations!  Pulling from contstructor ensures they are retained.
+      val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2, dad, fieldDefaultMethods) )
+
+      if symbol.flags.is(reflect.Flags.Case) then
+        // === Case Classes ===
+        ScalaCaseClassInfo(
+          className, 
+          Nil, 
+          Nil, 
+          caseFields.toArray, 
+          classAnnos, 
+          classDef.parents.map(_.symbol.fullName), 
+          isValueClass)
+      else
+        // === Non-Case Classes ===
+        
+        // ensure all constructur fields are vals
+        if symbol.fields.filter( _.flags.is(Flags.ParamAccessor)).map(_.flags.is(Flags.PrivateLocal)).foldLeft(false)(_|_) then
+          throw new ReflectException(s"Class [${symbol.fullName}]: Non-case class constructor arguments must all be 'val'")
+
+        inspectNonCaseClass(reflect, paramMap)(
+          symbol, 
+          classDef, 
+          dad,
+          className, 
+          fieldDefaultMethods,
+          Nil, // orderedTypeParameters
+          Nil, // typeMembers
+          caseFields.toArray, 
+          classAnnos,
+          classDef.parents.map(_.symbol.fullName),
+          isValueClass)
+
     // === Case Classes ===
+      /*
     else if symbol.flags.is(reflect.Flags.Case) then
       // Get field annotatations (from body of class--they're not on the constructor fields)
       val classDef = symbol.tree.asInstanceOf[ClassDef]
@@ -182,14 +271,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
       }.isDefined
 
       // Get superclass' field annotations--if any
-      val dad = classDef.parents.head match {
-        case tt: TypeTree => 
-          reflectOnClass(reflect,paramMap)(tt.tpe.asInstanceOf[TypeRef]) match {
-            case ci: ClassInfo => Some(ci) // Any kind of class
-            case _ => None // e.g. Unknown
-          }
-        case _ => None
-      }
+      val dad = getSuperclass(reflect, paramMap)(classDef)
 
       // Get any case field default value accessor method names (map by field index)
       val fieldDefaultMethods = symbol.companionClass.methods.collect {
@@ -212,15 +294,7 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
         classAnnos, 
         classDef.parents.map(_.symbol.fullName), 
         isValueClass)
-
-    // === Java Class ===
-    // User-written Java classes will have the source file.  Java library files will have <no file> for source
-    else if symbol.pos.sourceFile.toString.endsWith(".java") || symbol.pos.sourceFile.toString == "<no file>" then
-      // Reflecting Java classes requires the materialized Class, which may be available (e.g. Java collections) or not (e.g. user-written class).
-      // See if we can get it...  If not create a proxy.
-      scala.util.Try {
-        JavaClassInspector.inspectClass(Class.forName(symbol.fullName), paramMap)
-      }.toOption.getOrElse(JavaClassInfo(symbol.fullName))
+        */
 
     // === Other kinds of classes (non-case Scala) ===
     else
@@ -260,4 +334,4 @@ case class TastyReflection(reflect: Reflection)(aType: reflect.Type):
     //       }.toOption
     //   }
 
-    ScalaFieldInfo(index, valDef.name, fieldType, fieldAnnos, null, fieldDefaultMethods.get(index), None)
+    ScalaFieldInfo(index, valDef.name, fieldType, fieldAnnos, fieldDefaultMethods.get(index), None)

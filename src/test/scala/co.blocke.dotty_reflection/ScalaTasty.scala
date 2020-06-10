@@ -46,7 +46,6 @@ class ScalaTasty extends munit.FunSuite:
     |   annotations: Map(co.blocke.reflect.ClassAnno -> Map(name -> Foom))""".stripMargin)
   }
 
-  /* TODO
   test("handle parameterized class") {
     val wp = WithParam(1,true)
     val result = Reflector.reflectOnClass(wp.getClass) 
@@ -55,7 +54,6 @@ class ScalaTasty extends munit.FunSuite:
     |      (0)[T] one: T
     |      (1)[U] two: U""".stripMargin)
   }
-  */
 
   test("handle opaque type alias") {
     val result = Reflector.reflectOn[Employee]
@@ -95,7 +93,6 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals(newWd, WithDefault(5))
   }
 
-  /*
   test("plain class support") {
     val result = Reflector.reflectOn[PlainGood]
     assertEquals( result.show(), """ScalaClassInfo(co.blocke.dotty_reflection.PlainGood):
@@ -103,11 +100,11 @@ class ScalaTasty extends munit.FunSuite:
     |      (0) a: scala.Int
     |      (1) b: java.lang.String
     |   non-constructor fields:""".stripMargin)
-    interceptMessage[java.lang.Exception]("Class [co.blocke.dotty_reflection.PlainBad]: Non-case class constructor arguments must all be 'val'"){
-      Reflector.reflectOn[PlainBad]
-    }
+    // Can't test this... happens at compile-time
+    // interceptMessage[java.lang.Exception]("Class [co.blocke.dotty_reflection.PlainBad]: Non-case class constructor arguments must all be 'val'"){
+    //   Reflector.reflectOn[PlainBad]
+    // }
   }
-  */
 
   test("all Scala primitive types") {
     val result = Reflector.reflectOn[ScalaPrimitives]
@@ -130,14 +127,12 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals( result.show(), """JVMClassInfoProxy(scala.math.BigDecimal)""")
   }
 
-  /*
   test("Try type") {
     val result = Reflector.reflectOn[TryMe]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.TryMe):
     |   fields:
     |      (0) maybe: Try of scala.Boolean""".stripMargin)
   }
-  */
 
   test("sealed trait with case classes") {
     val result = Reflector.reflectOn[VehicleHolder]
@@ -179,7 +174,6 @@ class ScalaTasty extends munit.FunSuite:
     |         right--TraitInfo(co.blocke.dotty_reflection.InterC)""".stripMargin)
   }
 
-  /*
   test("handle Scala non-case classes") {
     val result = Reflector.reflectOn[FoomNC]
     val target = result.show()
@@ -196,6 +190,7 @@ class ScalaTasty extends munit.FunSuite:
     |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
   }
 
+  /*
   test("Inheritance and Annotations") {
     val result = Reflector.reflectOn[InheritSimpleChild]
     val target = result.show()

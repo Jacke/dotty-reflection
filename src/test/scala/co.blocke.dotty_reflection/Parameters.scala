@@ -265,6 +265,7 @@ class Parameters extends munit.FunSuite:
   }
   */
 
+  /*
   test("Nested trait substitutions") {
     val r = Reflector.reflectOn[T10[T11[Int, T5[Double, Char]], String]]
     val inst: T10[T11[Int, T5[Double, Char]], String] = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
@@ -280,3 +281,4 @@ class Parameters extends munit.FunSuite:
     |                  [Y] scala.Char
     |      (1)[B] y: java.lang.String""".stripMargin)
   }
+  */
