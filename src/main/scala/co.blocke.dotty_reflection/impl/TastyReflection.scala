@@ -106,10 +106,10 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
             // Most other "normal" Types
             //----------------------------------------
             case a @ AppliedType(t,tob) => 
-              println("Applied..."+paramMap)
-              println("      t: "+t)
-              println("    tob: "+tob)
-              println("")
+              // println("Applied..."+paramMap)
+              // println("      t: "+t)
+              // println("    tob: "+tob)
+              // println("")
 
               val actualArgRTypes = 
                 val typesymregx = """.*\.\_\$(.+)$""".r
@@ -119,14 +119,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
                 }}
 
               val typeSymbols = t.classSymbol.get.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
-              /*
-              val typesymregx = """.*\.\_\$(.+)$""".r
-              // Some of the arg types may be TypeSymbols in owning class (i.e. in paramMap).... check it out!
-              val actualArgRTypes = tob.map{ tpe => tpe.asInstanceOf[Type].typeSymbol.fullName match {
-                case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
-                case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[Type]) 
-              }}
-              */
+
               val typeMap = typeSymbols.zip(actualArgRTypes).toMap
 
               val foundType: Option[RType] = ExtractorRegistry.extractors.collectFirst {
@@ -236,11 +229,16 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
       // Because:  symbol's case fields lose the annotations!  Pulling from contstructor ensures they are retained.
       val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2, dad, fieldDefaultMethods) )
 
+      val orderedTypeParameters = symbol.primaryConstructor.paramSymss match {
+        case Nil => Nil
+        case p   => p.head.filter(_.isType).map(_.name.asInstanceOf[TypeSymbol])
+      }
+
       if symbol.flags.is(reflect.Flags.Case) then
         // === Case Classes ===
         ScalaCaseClassInfo(
           className, 
-          Nil, 
+          orderedTypeParameters, 
           Nil, 
           caseFields.toArray, 
           classAnnos, 
@@ -259,7 +257,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
           dad,
           className, 
           fieldDefaultMethods,
-          Nil, // orderedTypeParameters
+          orderedTypeParameters,
           Nil, // typeMembers
           caseFields.toArray, 
           classAnnos,

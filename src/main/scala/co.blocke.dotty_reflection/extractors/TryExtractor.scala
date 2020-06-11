@@ -31,5 +31,5 @@ case class TryExtractor() extends TypeInfoExtractor[TryInfo]:
 
       TryInfo(
         t.classSymbol.get.fullName,
-        Reflector.unwindType(reflect, paramMap)(tob.head.asInstanceOf[reflect.TypeRef])
+        paramMap.values.head
       )

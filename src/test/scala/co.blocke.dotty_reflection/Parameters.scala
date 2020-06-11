@@ -213,6 +213,8 @@ class Parameters extends munit.FunSuite:
   }
 
   test("Type member substitutions") {
+    pending
+    /*
     val result = Reflector.reflectOn[Envelope[FancyBody,Boolean]]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Envelope[T,U]):
     |   fields:
@@ -224,6 +226,7 @@ class Parameters extends munit.FunSuite:
     |      Giraffe[T]: ScalaCaseClassInfo(co.blocke.dotty_reflection.FancyBody):
     |         fields:
     |            (0) message: java.lang.String""".stripMargin)
+    */
   }
 
   /* Performance tests

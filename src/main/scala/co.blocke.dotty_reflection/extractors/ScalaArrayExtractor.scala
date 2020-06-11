@@ -28,7 +28,7 @@ case class ScalaArrayExtractor() extends TypeInfoExtractor[ArrayInfo]:
     tob: List[reflect.TypeOrBounds], 
     symbol: reflect.Symbol): RType =
 
-    val elementType = Reflector.unwindType(reflect, paramMap)(tob.head.asInstanceOf[reflect.TypeRef])
+    val elementType = paramMap.values.head
     val mangled = mangleArrayClassName(elementType)
     ArrayInfo(
       mangled,

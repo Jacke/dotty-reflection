@@ -5,6 +5,10 @@ import co.blocke.reflect.{ClassAnno,FieldAnno}
 import info._
 import PrimitiveType._
 
+
+inline def describe(message: String, color: String = Console.MAGENTA): Unit = println(s"$color$message${Console.RESET}")
+inline def pending = describe("   << Test Pending (below) >>", Console.YELLOW)
+
 class ScalaTasty extends munit.FunSuite:
 
   test("reflect basic Tasty class with union") {
@@ -46,13 +50,23 @@ class ScalaTasty extends munit.FunSuite:
     |   annotations: Map(co.blocke.reflect.ClassAnno -> Map(name -> Foom))""".stripMargin)
   }
 
-  test("handle parameterized class") {
+  // PROBLEM: Too Slow!! 2.x seconds, vs < 0.5 sec before.
+  // The processing in Reflection is too slow... it's called @ runtime for inspection
+  test("handle parameterized class - inspection") {
     val wp = WithParam(1,true)
     val result = Reflector.reflectOnClass(wp.getClass) 
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.WithParam[T,U]):
     |   fields:
     |      (0)[T] one: T
     |      (1)[U] two: U""".stripMargin)
+  }
+
+  test("handle parameterized class - reflection") {
+    val result = Reflector.reflectOn[WithParam[Int,Boolean]] 
+    assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.WithParam[T,U]):
+    |   fields:
+    |      (0)[T] one: scala.Int
+    |      (1)[U] two: scala.Boolean""".stripMargin)
   }
 
   test("handle opaque type alias") {
@@ -100,7 +114,7 @@ class ScalaTasty extends munit.FunSuite:
     |      (0) a: scala.Int
     |      (1) b: java.lang.String
     |   non-constructor fields:""".stripMargin)
-    // Can't test this... happens at compile-time
+    // Can't test this... happens at runti
     // interceptMessage[java.lang.Exception]("Class [co.blocke.dotty_reflection.PlainBad]: Non-case class constructor arguments must all be 'val'"){
     //   Reflector.reflectOn[PlainBad]
     // }
@@ -190,8 +204,9 @@ class ScalaTasty extends munit.FunSuite:
     |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
   }
 
-  /*
   test("Inheritance and Annotations") {
+    pending
+  /*
     val result = Reflector.reflectOn[InheritSimpleChild]
     val target = result.show()
     assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.InheritSimpleChild):
@@ -216,9 +231,12 @@ class ScalaTasty extends munit.FunSuite:
     |         annotations: Map(co.blocke.reflect.Change -> Map(name -> foobar), co.blocke.reflect.DBKey -> Map(index -> 1))
     |      (_) unused: scala.Double
     |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
+    */
   }
 
   test("Inheritance and Parameterized Classes") {
+    pending
+    /*
     val result = Reflector.reflectOn[ParamChild[Boolean]]
     assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.ParamChild[T]):
     |   fields:
@@ -226,5 +244,5 @@ class ScalaTasty extends munit.FunSuite:
     |   non-constructor fields:
     |      (_)[T] cosa: scala.Boolean
     |      (_)[T] item: scala.Boolean""".stripMargin)
+    */
   }
-  */
