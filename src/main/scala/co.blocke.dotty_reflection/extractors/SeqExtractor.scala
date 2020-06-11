@@ -36,6 +36,6 @@ case class SeqExtractor() extends TypeInfoExtractor[SeqLikeInfo]:
 
     SeqLikeInfo(
       t.classSymbol.get.fullName, 
-      Reflector.unwindType(reflect, paramMap)(tob.head.asInstanceOf[reflect.TypeRef])
+      paramMap.values.head
     )
     

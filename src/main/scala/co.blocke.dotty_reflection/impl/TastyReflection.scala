@@ -106,35 +106,36 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
             // Most other "normal" Types
             //----------------------------------------
             case a @ AppliedType(t,tob) => 
-              // println("APPLIED: "+a)
-              // println("      t: "+t)
-              // println("    tob: "+tob)
-              // println("   tsym: "+t.classSymbol.get.primaryConstructor.paramSymss.head)
-              // println("  tycon: "+a.tycon)
-              // println("")
+              println("Applied..."+paramMap)
+              println("      t: "+t)
+              println("    tob: "+tob)
+              println("")
+
+              val actualArgRTypes = 
+                val typesymregx = """.*\.\_\$(.+)$""".r
+                tob.map{ tpe => tpe.asInstanceOf[reflect.Type].typeSymbol.fullName match {
+                  case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
+                  case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[reflect.Type]) 
+                }}
+
+              val typeSymbols = t.classSymbol.get.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
+              /*
+              val typesymregx = """.*\.\_\$(.+)$""".r
+              // Some of the arg types may be TypeSymbols in owning class (i.e. in paramMap).... check it out!
+              val actualArgRTypes = tob.map{ tpe => tpe.asInstanceOf[Type].typeSymbol.fullName match {
+                case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
+                case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[Type]) 
+              }}
+              */
+              val typeMap = typeSymbols.zip(actualArgRTypes).toMap
 
               val foundType: Option[RType] = ExtractorRegistry.extractors.collectFirst {
-                case e if e.matches(reflect)(classSymbol) => e.extractInfo(reflect, paramMap)(t, tob, classSymbol)   
+                case e if e.matches(reflect)(classSymbol) => e.extractInfo(reflect, typeMap)(t, tob, classSymbol)   
               }
 
-              val typesymregx = """.*\.\_\$(.+)$""".r
               foundType.getOrElse{
                 // === Some other class we need to descend into, including a parameterized Scala class
-                println("..... Diving into AppliedType ..... with parammap "+paramMap)
-                val typeSymbols = t.classSymbol.get.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
-                println(s"Class ${t.classSymbol.get.fullName}: type symbols "+typeSymbols)
-                println("tob: "+tob)
-                // Some of the arg types may be TypeSymbols in owning class (i.e. in paramMap).... check it out!
-                println("   >>>  "+tob.map(_.asInstanceOf[Type].typeSymbol.fullName))
-                val actualArgRTypes = tob.map{ tpe => tpe.asInstanceOf[Type].typeSymbol.fullName match {
-                  case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
-                  case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[Type]) 
-                }}
-                val typeMap = typeSymbols.zip(actualArgRTypes).toMap
-                val c = reflectOnClass(reflect, typeMap)(t.asInstanceOf[TypeRef])
-                println("Reflected: "+c)
-                println("")
-                c
+                reflectOnClass(reflect, typeMap)(t.asInstanceOf[TypeRef])
               }
           
             case x => 
@@ -294,7 +295,5 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
     val fieldType = originalTypeSymbol.map( ots => 
       paramMap.getOrElse(ots, TypeSymbolInfo(ots.toString))
     ).getOrElse( Reflector.unwindType(reflect, paramMap)(valDef.tpt.tpe) )
-       
-    // val fieldType = Reflector.unwindType(reflect)(valDef.tpt.tpe)
 
     ScalaFieldInfo(index, valDef.name, fieldType, fieldAnnos, fieldDefaultMethods.get(index), originalTypeSymbol)
