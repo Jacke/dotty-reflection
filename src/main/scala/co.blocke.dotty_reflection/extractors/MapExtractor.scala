@@ -39,5 +39,5 @@ case class MapExtractor() extends TypeInfoExtractor[MapLikeInfo]:
 
     MapLikeInfo(
       t.classSymbol.get.fullName,
-      Reflector.unwindType(reflect)(tob(0).asInstanceOf[reflect.TypeRef]),
-      Reflector.unwindType(reflect)(tob(1).asInstanceOf[reflect.TypeRef]))
+      Reflector.unwindType(reflect, paramMap)(tob(0).asInstanceOf[reflect.TypeRef]),
+      Reflector.unwindType(reflect, paramMap)(tob(1).asInstanceOf[reflect.TypeRef]))

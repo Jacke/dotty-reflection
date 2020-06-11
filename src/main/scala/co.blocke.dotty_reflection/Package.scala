@@ -4,6 +4,8 @@ package co.blocke.dotty_reflection
 /** Mnemonic symbol for a type--typically a paramaterized type, e.g. Foo[T], where T is the symbol */
 opaque type TypeSymbol = String 
 
+type TypeSymbolMap = Map[TypeSymbol,RType]
+
 /** A union type is resolved to AnyRef, which isn't helpful.  This is a marker class name to differentiate a union type */
 val UNION_CLASS = "__union_type__"
 

@@ -25,7 +25,7 @@ class TastyInspection(clazz: Class[_], initialParamMap: Map[TypeSymbol, RType])
       //     case e if e.matches(clazz) => inspected = e.emptyInfo(clazz, initialParamMap)
       //   }
       case _ => 
-        val tr = TastyReflection(reflect)( Type(clazz) )
+        val tr = TastyReflection(reflect, Map.empty[TypeSymbol, RType])( Type(clazz) )
         inspected = tr.reflectOn
     }
     

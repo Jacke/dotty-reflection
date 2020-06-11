@@ -31,7 +31,7 @@ object Reflector:
   def reflectOnImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[RType] = 
     import qctx.tasty.{_, given _}
 
-    Expr( unwindType(qctx.tasty)(typeOf[T]) )
+    Expr( unwindType(qctx.tasty, Map.empty[TypeSymbol, RType])(typeOf[T]) )
 
 
   //------------------------
@@ -63,7 +63,7 @@ object Reflector:
 
   //============================== Support Functions ===========================//
 
-  def unwindType(reflect: Reflection)(aType: reflect.Type): RType =
+  def unwindType(reflect: Reflection, paramMap: TypeSymbolMap)(aType: reflect.Type): RType =
     import reflect.{_, given _}
 
     val structure = discoverStructure(reflect)(aType)
@@ -72,10 +72,10 @@ object Reflector:
         // Any is a special case... It may just be an "Any", or something else, like a opaque type alias.
         // In either event, we don't want to cache the result.
         if structure.className == "scala.Any" then
-          TastyReflection(reflect)(aType).reflectOn
+          TastyReflection(reflect, paramMap)(aType).reflectOn
         else
           cache.put(structure, SelfRefRType(structure.className))
-          val reflectedRtype = TastyReflection(reflect)(aType).reflectOn
+          val reflectedRtype = TastyReflection(reflect, paramMap)(aType).reflectOn
           cache.put(structure, reflectedRtype)
           reflectedRtype
       }

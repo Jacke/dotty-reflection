@@ -103,11 +103,11 @@ trait NonCaseClassInspector:
       val rtype = 
         originalTypeSymbol.flatMap( ots => paramMap.get(ots) ).getOrElse{
           if varDefDeclarations.contains(fieldName) then
-            Reflector.unwindType(reflect)(varDefDeclarations(fieldName))
+            Reflector.unwindType(reflect, paramMap)(varDefDeclarations(fieldName))
           else
             fGet.tree match {
-              case dd: DefDef => Reflector.unwindType(reflect)(dd.returnTpt.tpe)
-              case vd: ValDef => Reflector.unwindType(reflect)(vd.tpt.tpe)
+              case dd: DefDef => Reflector.unwindType(reflect, paramMap)(dd.returnTpt.tpe)
+              case vd: ValDef => Reflector.unwindType(reflect, paramMap)(vd.tpt.tpe)
             }
         }
   

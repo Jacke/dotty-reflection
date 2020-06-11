@@ -8,8 +8,6 @@ import scala.tasty.Reflection
 
 case class JavaMapExtractor(): // extends TypeInfoExtractor[JavaMapInfo]:
 
-  // def matches(clazz: Class[_]): Boolean = clazz <:< JMapClazz
-
   def emptyInfo(clazz: Class[_], paramMap: Map[TypeSymbol,RType]): JavaMapInfo = 
     val keyParamSymName = clazz.getTypeParameters()(0).getName 
     val keyParamType = paramMap.getOrElse(
@@ -27,18 +25,3 @@ case class JavaMapExtractor(): // extends TypeInfoExtractor[JavaMapInfo]:
       keyParamType,
       valueParamType
       )
-
-  // def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
-  //     t: reflect.Type, 
-  //     tob: List[reflect.TypeOrBounds], 
-  //     className: String, 
-  //     clazz: Class[_], 
-  //     typeInspector: ScalaClassInspectorLike
-  //   ): RType =
-
-  //   JavaMapInfo(
-  //     className, 
-  //     clazz,
-  //     clazz.getTypeParameters.map(_.getName.asInstanceOf[TypeSymbol]).toList, 
-  //     typeInspector.inspectType(reflect, paramMap)(tob(0).asInstanceOf[reflect.TypeRef]),
-  //     typeInspector.inspectType(reflect, paramMap)(tob(1).asInstanceOf[reflect.TypeRef]))
