@@ -7,6 +7,7 @@ import java.util.Optional
 
 class Parameters extends munit.FunSuite:
 
+/*
   test("0-level param substitution") {
     val result = Reflector.reflectOn[DuoTypes[Int,Float]].asInstanceOf[ScalaCaseClassInfo]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.DuoTypes[Q,U]):
@@ -213,8 +214,6 @@ class Parameters extends munit.FunSuite:
   }
 
   test("Type member substitutions") {
-    pending
-    /*
     val result = Reflector.reflectOn[Envelope[FancyBody,Boolean]]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Envelope[T,U]):
     |   fields:
@@ -226,8 +225,8 @@ class Parameters extends munit.FunSuite:
     |      Giraffe[T]: ScalaCaseClassInfo(co.blocke.dotty_reflection.FancyBody):
     |         fields:
     |            (0) message: java.lang.String""".stripMargin)
-    */
   }
+  */
 
   /* Performance tests
   var rtx: RType = null
@@ -268,7 +267,6 @@ class Parameters extends munit.FunSuite:
   }
   */
 
-  /*
   test("Nested trait substitutions") {
     val r = Reflector.reflectOn[T10[T11[Int, T5[Double, Char]], String]]
     val inst: T10[T11[Int, T5[Double, Char]], String] = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
@@ -284,4 +282,3 @@ class Parameters extends munit.FunSuite:
     |                  [Y] scala.Char
     |      (1)[B] y: java.lang.String""".stripMargin)
   }
-  */

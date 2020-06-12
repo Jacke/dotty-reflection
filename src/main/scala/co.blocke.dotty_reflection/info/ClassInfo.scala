@@ -7,7 +7,7 @@ trait ClassInfo extends RType: // TODO with ClassOrTrait:
   val name:                       String
   lazy val fields:                Array[FieldInfo]
   lazy val orderedTypeParameters: List[TypeSymbol]
-  lazy val typeMembers:           List[TypeMemberInfo]
+  lazy val typeMembers:           Array[TypeMemberInfo]
   lazy val annotations:           Map[String, Map[String,String]]
   lazy val mixins:                List[String]
 
@@ -17,7 +17,7 @@ trait ClassInfo extends RType: // TODO with ClassOrTrait:
 case class ScalaCaseClassInfo protected[dotty_reflection] (
     name:                   String,
     _orderedTypeParameters: List[TypeSymbol],
-    _typeMembers:           List[TypeMemberInfo],
+    _typeMembers:           Array[TypeMemberInfo],
     _fields:                Array[FieldInfo],
     _annotations:           Map[String, Map[String,String]],
     _mixins:                List[String],
@@ -40,7 +40,7 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
   lazy val constructor = 
     infoClass.getConstructor(fields.map(_.asInstanceOf[ScalaFieldInfo].constructorClass):_*)
 
-  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals)
+  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals.toArray)
 
   // Used for ScalaJack writing of type members ("external type hints").  If some type members are not class/trait, it messes up any
   // type hint modifiers, so for the purposes of serialization we want to filter out "uninteresting" type members (e.g. primitives)
@@ -63,7 +63,7 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
 case class ScalaClassInfo protected[dotty_reflection] (
     name:                   String,
     _orderedTypeParameters: List[TypeSymbol],
-    _typeMembers:           List[TypeMemberInfo],
+    _typeMembers:           Array[TypeMemberInfo],
     _fields:                Array[FieldInfo],  // constructor fields
     nonConstructorFields:   Array[FieldInfo],
     _annotations:           Map[String, Map[String,String]],
@@ -87,7 +87,7 @@ case class ScalaClassInfo protected[dotty_reflection] (
   lazy val constructor = 
     infoClass.getConstructor(fields.map(_.asInstanceOf[ScalaFieldInfo].constructorClass):_*)
     
-  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals)
+  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals.toArray)
 
   // Used for ScalaJack writing of type members ("external type hints").  If some type members are not class/trait, it messes up any
   // type hint modifiers, so for the purposes of serialization we want to filter out "uninteresting" type members (e.g. primitives)
@@ -117,7 +117,7 @@ case class JavaClassInfo protected[dotty_reflection] ( name: String, paramMap: T
   private lazy val proxy = impl.JavaClassInspector.inspectJavaClass(infoClass, paramMap, true).asInstanceOf[JavaClassInfoProxy]
   lazy val fields = proxy.fields
   lazy val orderedTypeParameters: List[TypeSymbol]                = proxy.orderedTypeParameters
-  lazy val typeMembers:           List[TypeMemberInfo]            = proxy.typeMembers
+  lazy val typeMembers:           Array[TypeMemberInfo]           = proxy.typeMembers
   lazy val annotations:           Map[String, Map[String,String]] = proxy.annotations
   lazy val mixins:                List[String]                    = proxy.mixins
 
@@ -163,7 +163,7 @@ case class JavaClassInfoProxy protected[dotty_reflection] (
     case s => f
   })
 
-  val typeMembers: List[TypeMemberInfo] = Nil  // unused for Java classes but needed on ClassInfo
+  val typeMembers: Array[TypeMemberInfo] = Nil.toArray  // unused for Java classes but needed on ClassInfo
 
   def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)\n"

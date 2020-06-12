@@ -11,7 +11,6 @@ inline def pending = describe("   << Test Pending (below) >>", Console.YELLOW)
 
 class ScalaTasty extends munit.FunSuite:
 
-/*
   test("reflect basic Tasty class with union") {
     val result = Reflector.reflectOn[Person] 
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Person):
@@ -231,7 +230,6 @@ class ScalaTasty extends munit.FunSuite:
     |      (_) unused: scala.Double
     |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
   }
-  */
 
   test("Inheritance and Parameterized Classes") {
     val result = Reflector.reflectOn[ParamChild[Boolean]]

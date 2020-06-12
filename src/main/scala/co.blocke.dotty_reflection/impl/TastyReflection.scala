@@ -239,12 +239,24 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
 
       val orderedTypeParameters = getTypeParameters(reflect)(symbol)
 
+      // Find any type members matching a class type parameter
+      val typeMembers = classDef.body.collect {
+        case TypeDef(typeName, typeTree) if paramMap.contains(typeTree.asInstanceOf[TypeTree].tpe.asInstanceOf[TypeBounds].low.typeSymbol.name.asInstanceOf[TypeSymbol]) =>
+          val typeSym = typeTree.asInstanceOf[TypeTree].tpe.asInstanceOf[TypeBounds].low.typeSymbol.name.asInstanceOf[TypeSymbol]
+          TypeMemberInfo(
+            typeName,
+            typeSym,
+            paramMap.getOrElse(typeSym, TypeSymbolInfo(typeSym.toString)
+            )
+          )
+      }
+
       if symbol.flags.is(reflect.Flags.Case) then
         // === Case Classes ===
         ScalaCaseClassInfo(
           className, 
           orderedTypeParameters, 
-          Nil, 
+          typeMembers.toArray, 
           caseFields.toArray, 
           classAnnos, 
           classDef.parents.map(_.symbol.fullName), 
@@ -263,7 +275,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
           className, 
           fieldDefaultMethods,
           orderedTypeParameters,
-          Nil, // typeMembers
+          typeMembers.toArray,
           caseFields.toArray, 
           classAnnos,
           classDef.parents.map(_.symbol.fullName),

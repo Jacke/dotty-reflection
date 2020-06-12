@@ -15,7 +15,7 @@ trait NonCaseClassInspector:
     name:                  String,
     fieldDefaultMethods:   Map[Int, (String,String)],
     orderedTypeParameters: List[TypeSymbol],
-    typeMembers:           List[TypeMemberInfo],
+    typeMembers:           Array[TypeMemberInfo],
     fields:                Array[FieldInfo],
     annotations:           Map[String, Map[String,String]],
     mixins:                List[String],
@@ -116,12 +116,13 @@ trait NonCaseClassInspector:
       val fieldName = fGet.name
 
       // Figure out the original type symbols, i.e. T, (if any)
-      val originalTypeSymbol = 
-        // TOOD...
-        // if paramMap.contains(fGet.getGenericReturnType.toString.asInstanceOf[TypeSymbol])
-        //   Some(fGet.getGenericReturnType.toString.asInstanceOf[TypeSymbol])
-        // else
-          None
+      val originalTypeSymbol = { 
+        val tpe: Type = fGet.tree match {
+          case vd: ValDef => vd.tpt.tpe
+          case dd: DefDef => dd.returnTpt.tpe
+        }
+        paramMap.get(tpe.typeSymbol.name.asInstanceOf[TypeSymbol]).flatMap(_ => Some(tpe.typeSymbol.name.asInstanceOf[TypeSymbol]))
+      }
 
       val rtype = 
         originalTypeSymbol.flatMap( ots => paramMap.get(ots) ).getOrElse{
@@ -149,7 +150,7 @@ trait NonCaseClassInspector:
     ScalaClassInfo(
       name,
       orderedTypeParameters,
-      typeMembers,
+      typeMembers.toArray,
       fields,
       nonConstructorFields.toArray,
       annotations,
