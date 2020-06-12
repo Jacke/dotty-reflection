@@ -1,10 +1,7 @@
 package co.blocke.dotty_reflection
 
-// import impl.ScalaClassInspector
 import info._ 
 import impl._
-// import scala.tasty.inspector._
-// import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
 import Clazzes._
 import scala.quoted._
@@ -32,33 +29,6 @@ object Reflector:
     import qctx.tasty.{_, given _}
 
     Expr( unwindType(qctx.tasty, Map.empty[TypeSymbol, RType])(typeOf[T]) )
-
-
-  //------------------------
-  //  <<  MACRO ENTRY >>
-  //------------------------
-  // inline def getTypeOf[T]: scala.quoted.Type[T] = ${ getTypeOfImpl[T]() }
-
-  // def getTypeOfImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[scala.quoted.Type[T]] = 
-  //   implicit val liftable: Liftable[quoted.Type[T]] = new Liftable[quoted.Type[T]] {
-  //     def toExpr(x: quoted.Type[T]) =
-  //       '{ deserialize(${Expr(serialize(x)) }).asInstanceOf[quoted.Type[T]] }
-  //   }
-  //   Expr( ttype )
-  /*
-  inline def isSubclassOf[T](t: scala.quoted.Type[_]): Boolean = ${ isSubclassOfImpl[T]( '{t} ) }
-
-  def isSubclassOfImpl[T](t: Expr[scala.quoted.Type[_]])(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[Boolean] = 
-    import qctx.tasty.{_, given _}
-    // implicit val liftable: Liftable[quoted.Type[_]] = new Liftable[quoted.Type[_]] {
-    //   def toExpr(x: quoted.Type[_]) =
-    //     '{ deserialize(${Expr(serialize(x)) }).asInstanceOf[quoted.Type[_]] }
-    // }
-    println("In here >>> "+t)
-    Expr(true)
-    // Expr( t.asInstanceOf[qctx.tasty.Type] <:< typeOf[T] )
-    */
-
 
 
   //============================== Support Functions ===========================//
@@ -116,7 +86,7 @@ object Reflector:
    *  NOTE: If Class is parameterized, this call can't infer the types of the parameters.  In that case, call reflectOnClassWithParams
    *  NOTE: This is *NOT* a macro!
    */
-  def reflectOnClass(clazz: Class[_], prebakedStructure: Option[TypeStructure] = None): RType =
+  def reflectOnClass(clazz: Class[_]): RType =
     val className = clazz.getName
     // See if this is a top-level Scala 2 Enumeration... cumbersome, I know...
     val isEnumeration = scala.util.Try(clazz.getMethod("values")).toOption.map( _.getReturnType.getName == "scala.Enumeration$ValueSet").getOrElse(false)
@@ -124,7 +94,7 @@ object Reflector:
       val enumVals: Set[_] = clazz.getMethod("values").invoke(clazz).asInstanceOf[Set[_]]
       ScalaEnumerationInfo(className, enumVals.map(_.toString).toList)
     else
-      val structure = prebakedStructure.getOrElse(TypeStructure(className,Nil))
+      val structure = TypeStructure(className,Nil)
       this.synchronized {
         Option(cache.get(structure)).getOrElse{ 
           cache.put(structure, SelfRefRType(className))
@@ -136,41 +106,6 @@ object Reflector:
         }
       }
 
-    /*
-  /** Construct a fully-parameterized RType if the class' type params are known */
-  def reflectOnClassWithParams(clazz: Class[_], params: List[RType]): RType =
-    Option(paramerterizedClassCache.get( (clazz,params) )).getOrElse{
-      paramerterizedClassCache.put((clazz,params), SelfRefRType(clazz.getName, params))
-      val className = clazz.getName
-      val classParams = clazz.params.zip(params).toMap
-      val tc = new ScalaClassInspector(clazz, classParams)
-
-      // WARNING: This can fail if you inspect on a Scala library class or primitive: Int, Option, List, etc
-      tc.inspect("", List(className))
-      val found = tc.inspected
-      paramerterizedClassCache.put((clazz,params), found)
-      found
-    }
-    */
-
-    /*
-  private def unpackTypeStructure(ps: TypeStructure): RType =
-    ps match {
-      case TypeStructure(ANY_CLASS, Nil) => 
-        PrimitiveType.Scala_Any
-      case ts @ TypeStructure(className, Nil) => 
-        reflectOnClass(Class.forName(className), Some(ts))
-      case TypeStructure(UNION_CLASS, subparams) =>
-        val resolvedParams = subparams.map(sp => unpackTypeStructure(sp))
-        UnionInfo(UNION_CLASS, resolvedParams(0), resolvedParams(1))
-      case TypeStructure(INTERSECTION_CLASS, subparams) =>
-        val resolvedParams = subparams.map(sp => unpackTypeStructure(sp))
-        IntersectionInfo(INTERSECTION_CLASS, resolvedParams(0), resolvedParams(1))
-      case TypeStructure(className, subparams) =>
-        val resolvedParams = subparams.map(sp => unpackTypeStructure(sp))
-        reflectOnClassWithParams(Class.forName(className), resolvedParams)
-    }
-    */
 
   // pre-loaded with known language primitive types
   private val cache = new java.util.concurrent.ConcurrentHashMap[TypeStructure, RType](Map(

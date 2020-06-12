@@ -2,6 +2,7 @@ package co.blocke.dotty_reflection
 
 import quoted._
 import java.io._
+import Liftable._
 
 given Liftable[TypeSymbol] {
   def toExpr(t: TypeSymbol) = '{ ${Expr(t.asInstanceOf[String])}.asInstanceOf[TypeSymbol] }

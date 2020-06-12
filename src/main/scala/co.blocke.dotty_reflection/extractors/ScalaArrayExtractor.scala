@@ -13,16 +13,6 @@ case class ScalaArrayExtractor() extends TypeInfoExtractor[ArrayInfo]:
     scala.util.Try( ScalaArrayClazz.isAssignableFrom( Class.forName(symbol.fullName) ) ).toOption.getOrElse(false)
 
 
-  def emptyInfo(reflect: Reflection)(symbol: reflect.Symbol, paramMap: Map[TypeSymbol,RType]): ArrayInfo =
-    val classDef = symbol.tree.asInstanceOf[reflect.ClassDef]
-    val elemParamSymName = classDef.constructor.paramss.head.head.toString
-    val elemParamType = paramMap.getOrElse(
-      elemParamSymName.asInstanceOf[TypeSymbol], 
-      TypeSymbolInfo(elemParamSymName)
-      )
-    ArrayInfo("[java.lang.Object;", elemParamType)
-
-
   def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
     t: reflect.Type, 
     tob: List[reflect.TypeOrBounds], 

@@ -13,31 +13,13 @@ case class MapExtractor() extends TypeInfoExtractor[MapLikeInfo]:
     scala.util.Try( MapClazz.isAssignableFrom( Class.forName(symbol.fullName) ) ).toOption.getOrElse(false)
 
 
-  def emptyInfo(reflect: Reflection)(symbol: reflect.Symbol, paramMap: Map[TypeSymbol,RType]): MapLikeInfo =
-    val classDef = symbol.tree.asInstanceOf[reflect.ClassDef]
-    val keyParamSymName = classDef.constructor.paramss.head(0).toString
-    val keyParamType = paramMap.getOrElse(
-      keyParamSymName.asInstanceOf[TypeSymbol], 
-      TypeSymbolInfo(keyParamSymName)
-      )
-    val valueParamSymName = classDef.constructor.paramss.head(1).toString
-    val valueParamType = paramMap.getOrElse(
-      valueParamSymName.asInstanceOf[TypeSymbol], 
-      TypeSymbolInfo(valueParamSymName)
-      )
-    MapLikeInfo(
-      symbol.fullName,
-      keyParamType,
-      valueParamType
-      )
-
-
   def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
     t: reflect.Type, 
     tob: List[reflect.TypeOrBounds], 
     symbol: reflect.Symbol): RType =
 
+    val tparms = MapClazz.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
     MapLikeInfo(
       t.classSymbol.get.fullName,
-      Reflector.unwindType(reflect, paramMap)(tob(0).asInstanceOf[reflect.TypeRef]),
-      Reflector.unwindType(reflect, paramMap)(tob(1).asInstanceOf[reflect.TypeRef]))
+      paramMap(tparms(0)),
+      paramMap(tparms(1)))

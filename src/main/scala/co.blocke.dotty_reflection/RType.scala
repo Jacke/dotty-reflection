@@ -17,11 +17,11 @@ case class TypeMemberInfo(name: String, typeSymbol: TypeSymbol, memberType: RTyp
 }
 
 
-case class BogusInfo() extends RType {
-  val name = "Bogus"
-  lazy val infoClass = Class.forName("co.blocke.dotty_reflection.BogusInfo")
+case class Scala2Info(name: String) extends RType {
+  lazy val infoClass = Class.forName(name)
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = "Foom..." 
+  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)"
 }
 
 

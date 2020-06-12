@@ -1,0 +1,11 @@
+1. Fix Java parameterized types
+2. Eliminate emptyInfo() from extractor code
+3. Open gitter chat about incremental recompile for macros:
+
+	A.scala
+	macro...
+
+	B.scala
+	myCode.callMacro()...
+
+	Does A get recompiled if B changes?  It doesn't seem to, leading to spectacular crashes.

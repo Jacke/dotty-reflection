@@ -15,20 +15,6 @@ case class SeqExtractor() extends TypeInfoExtractor[SeqLikeInfo]:
     isSeq || isSet
 
 
-  def emptyInfo(reflect: Reflection)(symbol: reflect.Symbol, paramMap: Map[TypeSymbol,RType]): SeqLikeInfo = 
-    val classDef = symbol.tree.asInstanceOf[reflect.ClassDef]
-    val elemParamSymName = classDef.constructor.paramss.head.head.toString
-    val elemParamType = paramMap.getOrElse(
-      elemParamSymName.asInstanceOf[TypeSymbol], 
-      TypeSymbolInfo(elemParamSymName)
-      )
-
-    SeqLikeInfo(
-      symbol.fullName,  
-      elemParamType
-      ) 
-
-
   def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
     t: reflect.Type, 
     tob: List[reflect.TypeOrBounds], 

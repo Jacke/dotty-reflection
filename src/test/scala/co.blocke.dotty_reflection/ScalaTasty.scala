@@ -11,6 +11,7 @@ inline def pending = describe("   << Test Pending (below) >>", Console.YELLOW)
 
 class ScalaTasty extends munit.FunSuite:
 
+/*
   test("reflect basic Tasty class with union") {
     val result = Reflector.reflectOn[Person] 
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Person):
@@ -136,9 +137,9 @@ class ScalaTasty extends munit.FunSuite:
     |      (9) j: scala.Any""".stripMargin)
   }
 
-  test("unknown class") {
+  test("Scala 2.x class") {
     val result = Reflector.reflectOn[scala.math.BigDecimal]
-    assertEquals( result.show(), """JVMClassInfoProxy(scala.math.BigDecimal)""")
+    assertEquals( result.show(), """Scala2Info(scala.math.BigDecimal)""")
   }
 
   test("Try type") {
@@ -205,8 +206,6 @@ class ScalaTasty extends munit.FunSuite:
   }
 
   test("Inheritance and Annotations") {
-    pending
-  /*
     val result = Reflector.reflectOn[InheritSimpleChild]
     val target = result.show()
     assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.InheritSimpleChild):
@@ -231,12 +230,10 @@ class ScalaTasty extends munit.FunSuite:
     |         annotations: Map(co.blocke.reflect.Change -> Map(name -> foobar), co.blocke.reflect.DBKey -> Map(index -> 1))
     |      (_) unused: scala.Double
     |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
-    */
   }
+  */
 
   test("Inheritance and Parameterized Classes") {
-    pending
-    /*
     val result = Reflector.reflectOn[ParamChild[Boolean]]
     assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.ParamChild[T]):
     |   fields:
@@ -244,5 +241,4 @@ class ScalaTasty extends munit.FunSuite:
     |   non-constructor fields:
     |      (_)[T] cosa: scala.Boolean
     |      (_)[T] item: scala.Boolean""".stripMargin)
-    */
   }

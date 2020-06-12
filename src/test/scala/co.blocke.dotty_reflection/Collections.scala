@@ -94,8 +94,6 @@ class Collections extends munit.FunSuite:
   }
 
   test("Scala Arrays") {
-    pending
-    /*
     val result = Reflector.reflectOn[WithScalaArray]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.WithScalaArray):
     |   fields:
@@ -109,5 +107,4 @@ class Collections extends munit.FunSuite:
     |      (7) x7: array of scala.Long
     |      (8) x8: array of scala.Short
     |      (9) x9: array of java.lang.String""".stripMargin)
-    */
   }

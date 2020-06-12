@@ -61,14 +61,37 @@ trait NonCaseClassInspector:
       case _ => Map.empty[String,Map[String, Map[String,String]]]
     }
 
+    def upTreeFind(fieldName: String, sym: Symbol): Option[Symbol] = 
+      symbol.tree.asInstanceOf[ClassDef].parents.headOption match {
+                case Some(tt: TypeTree) => tt.tpe.classSymbol.get.field(fieldName) match {
+                  case dotty.tools.dotc.core.Symbols.NoSymbol => 
+                    upTreeFind(fieldName, tt.tpe.classSymbol.get)
+                  case found => Some(found)
+                }
+                case _ => None
+              }
+
     // Include inherited methods (var & def), including inherited!
     // Produces (val <field>, method <field>_=)
-    val getterSetter: List[(Symbol,Symbol)] = symbol.methods.filter(_.name.endsWith("_=")).map{ m => 
+    // println(s"============[ class ${symbol.fullName} ]")
+    // println("      methods: "+symbol.methods)
+    // println("      fields : "+symbol.fields)
+    val getterSetter: List[(Symbol,Symbol)] = symbol.methods.filter(_.name.endsWith("_=")).map{ setter => 
+      // println("... look for "+setter.name.dropRight(2))
       // Trying to get the setter... which could be a val (field) if declared is a var, or it could be a method 
-      // in the case of user-written getter/setter
-      symbol.field(m.name.dropRight(2)) match {
-        case dotty.tools.dotc.core.Symbols.NoSymbol => (symbol.method(m.name.dropRight(2)).head, m)
-        case s: Symbol => (s,m)
+      // in the case of user-written getter/setter... OR it could be defined in the superclass
+      symbol.field(setter.name.dropRight(2)) match {
+        case dotty.tools.dotc.core.Symbols.NoSymbol => 
+          symbol.method(setter.name.dropRight(2)) match {
+            case Nil => 
+              upTreeFind(setter.name.dropRight(2), symbol) match {
+                case Some(getter) => (getter, setter)
+                case None =>
+                  throw new ReflectException(s"Can't find field getter ${setter.name.dropRight(2)} in class ${symbol.fullName} or its superclass(es).")
+              }
+            case getter => (getter.head, setter)
+          }
+        case getter: Symbol => (getter, setter)
       }
     }
 

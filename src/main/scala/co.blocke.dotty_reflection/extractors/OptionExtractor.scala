@@ -10,21 +10,7 @@ case class OptionExtractor() extends TypeInfoExtractor[ScalaOptionInfo]:
 
   def matches(reflect: Reflection)(symbol: reflect.Symbol): Boolean = symbol.fullName == OptionClazz.getName
 
-
-  def emptyInfo(reflect: Reflection)(symbol: reflect.Symbol, paramMap: Map[TypeSymbol,RType]): ScalaOptionInfo =
-    val classDef = symbol.tree.asInstanceOf[reflect.ClassDef]
-    val optionParamSymName = classDef.constructor.paramss.head.head.toString
-    val optionParamType = paramMap.getOrElse(
-      optionParamSymName.asInstanceOf[TypeSymbol], 
-      TypeSymbolInfo(optionParamSymName)
-      )
-
-    ScalaOptionInfo(
-      symbol.fullName, 
-      optionParamType
-      )
-
-
+  
   def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
     t: reflect.Type, 
     tob: List[reflect.TypeOrBounds], 

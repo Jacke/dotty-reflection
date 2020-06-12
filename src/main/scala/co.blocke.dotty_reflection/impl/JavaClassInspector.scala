@@ -13,9 +13,8 @@ import Clazzes._
  *  ScalaClassInspector by default.  This is *NOT* run in a macro!  It's executed at runtime, when the java class files are available.
  */
 object JavaClassInspector:
-  def inspectClass(c: Class[?], paramMap: Map[TypeSymbol, RType]): RType =
+  def inspectJavaClass(c: Class[?], paramMap: TypeSymbolMap, returnProxy: Boolean = false): RType =
     // We must detect and handle any top-level Java collections or they'll be "dumbed-down" to JavaClassInfo, which isn't what we want.
-    // (Not worried about the type parameters of the collections here--they'll be populated in the sewTypeParams() method later)
     c match {
       case z if z =:= OptionalClazz => OptionalExtractor().emptyInfo(z,paramMap)
       case z if z <:< JStackClazz   => JavaStackExtractor().emptyInfo(z, paramMap)
@@ -26,7 +25,10 @@ object JavaClassInspector:
       case _ =>
         val annos:List[Annotation] = c.getAnnotations.toList
         val allAnnos = annos.map(a => parseAnno(a)).toMap
-        JVMClassInfoProxy(c.getName,  parseFields(c, paramMap).toArray, typeParamSymbols(c), allAnnos)
+        if returnProxy then
+          JavaClassInfoProxy(c.getName,  inspectJavaFields(c, paramMap).toArray, typeParamSymbols(c), allAnnos)
+        else
+          JavaClassInfo(c.getName, paramMap)
     }
 
   private def parseAnno( annoClass: Annotation): (String,Map[String,String]) = 
@@ -35,7 +37,7 @@ object JavaClassInspector:
 
   private def typeParamSymbols(c: Class[_]): List[TypeSymbol] = c.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
 
-  private def parseFields(clazz: Class[?], paramMap: Map[TypeSymbol,RType]): List[JavaFieldInfo] = 
+  private def inspectJavaFields(clazz: Class[?], paramMap: TypeSymbolMap): List[JavaFieldInfo] = 
     Introspector
       .getBeanInfo(clazz)
       .getPropertyDescriptors
@@ -49,51 +51,49 @@ object JavaClassInspector:
           val setterAnnos = setter.getAnnotations.map(a => parseAnno(a)).toMap
           val fieldAnnos = getterAnnos ++ setterAnnos
           val fieldName = s"${setter.getName.charAt(3).toLower}${setter.getName.drop(4)}"
-          val fieldType = inspectType(clazz.getTypeParameters.toList, getter.getGenericReturnType, paramMap)
+          val fieldType = inspectJavaType(clazz.getTypeParameters.toList, getter.getGenericReturnType, paramMap)
 
           JavaFieldInfo(0,fieldName, fieldType, fieldAnnos, getter, setter, None)
       }.toList.zipWithIndex.map{
-            // }.toList.filterNot(_.annotations.contains(IGNORE)).zipWithIndex.map{
         (f,i) => f.copy(index = i)
       }
 
-  private def inspectType(mainTypeParams: List[TypeVariable[_]], fieldType: JType, paramMap: Map[TypeSymbol,RType]): RType =
+  private def inspectJavaType(mainTypeParams: List[TypeVariable[_]], fieldType: JType, paramMap: TypeSymbolMap): RType =
     fieldType match {
       case g: GenericArrayType => 
-        JavaArrayInfo(inspectType(mainTypeParams, g.getGenericComponentType, paramMap))
+        JavaArrayInfo(inspectJavaType(mainTypeParams, g.getGenericComponentType, paramMap))
 
-        // All this stuff gets triggered if there are Java collections *in a Java class*.  They don't get triggered
+      // All this stuff gets triggered if there are Java collections *in a Java class*.  They don't get triggered
       // if we're inspecting a top-level collection, i.e. a Java collection that is a member of a Scala class.
       case p: ParameterizedType if p.getRawType.isInstanceOf[Class[_]] => 
         p.getRawType.asInstanceOf[Class[_]] match {
           case c if c =:= OptionalClazz =>
-            val optionType = inspectType(mainTypeParams, p.getActualTypeArguments.head, paramMap) match {
+            val optionType = inspectJavaType(mainTypeParams, p.getActualTypeArguments.head, paramMap) match {
               case t: TypeSymbolInfo if paramMap.contains(t.name.asInstanceOf[TypeSymbol]) => paramMap(t.name.asInstanceOf[TypeSymbol])
               case t => t
             }
             JavaOptionalInfo(c.getName, optionType)
           case c if c <:< JMapClazz =>
             val params = p.getActualTypeArguments.toList
-            JavaMapInfo(c.getName, typeParamSymbols(c), inspectType(mainTypeParams, params(0), paramMap), inspectType(mainTypeParams, params(1), paramMap))
+            JavaMapInfo(c.getName, typeParamSymbols(c), inspectJavaType(mainTypeParams, params(0), paramMap), inspectJavaType(mainTypeParams, params(1), paramMap))
           case c if c <:< JStackClazz =>
-            JavaStackInfo(c.getName, typeParamSymbols(c), inspectType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
+            JavaStackInfo(c.getName, typeParamSymbols(c), inspectJavaType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
           case c if c <:< JListClazz =>
-            JavaListInfo(c.getName, typeParamSymbols(c), inspectType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
+            JavaListInfo(c.getName, typeParamSymbols(c), inspectJavaType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
           case c if c <:< JQueueClazz =>
-            JavaQueueInfo(c.getName, typeParamSymbols(c), inspectType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
+            JavaQueueInfo(c.getName, typeParamSymbols(c), inspectJavaType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
           case c if c <:< JSetClazz =>
-            JavaSetInfo(c.getName, typeParamSymbols(c), inspectType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
-          // case c =>
-          //   val params = p.getActualTypeArguments.toList
-          //   Reflector.reflectOnClassWithParams(c, params.map(pt => Reflector.reflectOnClass(pt.asInstanceOf[Class[_]])))
+            JavaSetInfo(c.getName, typeParamSymbols(c), inspectJavaType(mainTypeParams, p.getActualTypeArguments.head, paramMap))
+          case c =>
+            val params = p.getActualTypeArguments.toList.map(p => Reflector.reflectOnClass(p.asInstanceOf[Class[_]]))
+            inspectJavaClass(c, typeParamSymbols(c).zip(params).toMap)
         }
       case v: TypeVariable[_] => 
         paramMap.getOrElse(v.getName.asInstanceOf[TypeSymbol],TypeSymbolInfo(v.getName) )
       case w: WildcardType => throw new ReflectException("Wildcard types not currently supported in reflection library")
       case other if other.isInstanceOf[Class[_]] => 
         other.asInstanceOf[Class[_]] match {
-          case c if c.isArray => JavaArrayInfo(inspectType(mainTypeParams, c.getComponentType, paramMap))
-          // case n if(mainTypeParams contains fieldType) => TypeSymbolInfo(n)  // <--- This seems broken!  Not sure what the intent was
+          case c if c.isArray => JavaArrayInfo(inspectJavaType(mainTypeParams, c.getComponentType, paramMap))
           case c if c.isEnum => JavaEnumInfo(c.getName)
           case c => Reflector.reflectOnClass(c)
         }

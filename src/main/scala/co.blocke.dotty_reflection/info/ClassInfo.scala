@@ -112,9 +112,9 @@ case class ScalaClassInfo protected[dotty_reflection] (
 /** Java class reflection has a special problem... we need the class file, which isn't available during compilation (i.e. inside a macro).
  *  The best we can do is capture the name of the class and materialize/reflect on the class outside of the macro, lazy-like.
  */
-case class JavaClassInfo protected[dotty_reflection] ( name: String ) extends ClassInfo:
+case class JavaClassInfo protected[dotty_reflection] ( name: String, paramMap: TypeSymbolMap ) extends ClassInfo:
   lazy val infoClass: Class[_] = Class.forName(name)
-  private lazy val proxy = impl.JavaClassInspector.inspectClass(infoClass, Map.empty[TypeSymbol, RType]).asInstanceOf[JVMClassInfoProxy]
+  private lazy val proxy = impl.JavaClassInspector.inspectJavaClass(infoClass, paramMap, true).asInstanceOf[JavaClassInfoProxy]
   lazy val fields = proxy.fields
   lazy val orderedTypeParameters: List[TypeSymbol]                = proxy.orderedTypeParameters
   lazy val typeMembers:           List[TypeMemberInfo]            = proxy.typeMembers
@@ -134,7 +134,7 @@ case class JavaClassInfo protected[dotty_reflection] ( name: String ) extends Cl
     + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
   
 
-case class JVMClassInfoProxy protected[dotty_reflection] (
+case class JavaClassInfoProxy protected[dotty_reflection] (
     name:                   String,
     _fields:                Array[FieldInfo],
     _orderedTypeParameters: List[TypeSymbol],

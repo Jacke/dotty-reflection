@@ -14,23 +14,12 @@ case class TupleExtractor() extends TypeInfoExtractor[TupleInfo]:
   def matches(reflect: Reflection)(symbol: reflect.Symbol): Boolean = tupleFullName.matches(symbol.fullName)
 
 
-  def emptyInfo(reflect: Reflection)(symbol: reflect.Symbol, paramMap: Map[TypeSymbol,RType]): TupleInfo =
-    val classDef = symbol.tree.asInstanceOf[reflect.ClassDef]
-    val tupleTypeSyms = classDef.constructor.paramss.head.map(_.toString)
-    val tupleParamTypes = tupleTypeSyms.map( et => paramMap.getOrElse(
-      et.asInstanceOf[TypeSymbol], 
-      TypeSymbolInfo(et)
-      ))
-    TupleInfo(
-      symbol.fullName, 
-      tupleParamTypes.toArray)
-
-
   def extractInfo(reflect: Reflection, paramMap: Map[TypeSymbol,RType])(
     t: reflect.Type, 
     tob: List[reflect.TypeOrBounds], 
     symbol: reflect.Symbol): RType =
 
-    val elementTypes = tob.map( t => Reflector.unwindType(reflect, paramMap)(t.asInstanceOf[reflect.TypeRef]) )
-    TupleInfo(t.classSymbol.get.fullName, elementTypes.toArray)
+    val tparms = Class.forName(t.classSymbol.get.fullName).getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
+    val elementTypes = tparms.map( p => paramMap(p) ).toArray
+    TupleInfo(t.classSymbol.get.fullName, elementTypes)
 

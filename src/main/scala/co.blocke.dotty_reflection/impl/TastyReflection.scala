@@ -23,119 +23,124 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
   def reflectOn: RType = 
     reflectOnType(reflect, paramMap)(aType.asInstanceOf[TypeRef])
 
+  
+  def getTypeParameters(reflect: Reflection)(symbol: reflect.Symbol): List[TypeSymbol] = 
+    symbol.primaryConstructor.paramSymss match {
+      case Nil => Nil
+      case p if p.nonEmpty  => p.head.filter(_.isType).map(_.name.asInstanceOf[TypeSymbol])
+      case _   => Nil
+    }
+
 
   protected def reflectOnType(reflect: Reflection, paramMap: TypeSymbolMap)(typeRef: reflect.TypeRef): RType = 
     import reflect.{_, given _}
 
-      typeRef.classSymbol match {
+    typeRef.classSymbol match {
 
-        // Intersection types don't have a class symbol, so don't assume one!
-        case None =>
-          typeRef match {
-            // Intersection Type
+      // Intersection types don't have a class symbol, so don't assume one!
+      case None =>
+        typeRef match {
+          // Intersection Type
+          //----------------------------------------
+          case AndType(left,right) =>
+            val resolvedLeft: RType = Reflector.unwindType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
+            val resolvedRight: RType = Reflector.unwindType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
+            IntersectionInfo(INTERSECTION_CLASS, resolvedLeft, resolvedRight)
+
+          // Union Type
+          //----------------------------------------
+          case OrType(left,right) =>
+            val resolvedLeft: RType = Reflector.unwindType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
+            val resolvedRight: RType = Reflector.unwindType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
+            UnionInfo(UNION_CLASS, resolvedLeft, resolvedRight)
+
+          case u => 
+            throw new ReflectException("Unsupported TypeRef: "+typeRef)
+        }
+
+      case Some(classSymbol) =>
+        // Handle gobbled non-class scala.Enumeration.Value (old 2.x Enumeration class values)
+        val (is2xEnumeration, className) = classSymbol.fullName match { 
+          case raw if raw == ENUM_CLASSNAME => 
+            val enumerationClass = typeRef.typeSymbol.fullName
+            if( enumerationClass == ENUM_CLASSNAME ) then
+              // If caller did NOT define a type member (type X = Value) inside their Enumeration class
+              val enumClassName = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass.fullName.dropRight(1) // chop the '$' off the end!
+              (true, enumClassName)
+            else
+              // If caller defined a type member (type X = Value) inside their Enumeration class
+              (true, enumerationClass.dropRight(enumerationClass.length - enumerationClass.lastIndexOf('$')))
+          case _  => (false, classSymbol.fullName)
+        }
+
+        typeRef match {
+          case named: dotty.tools.dotc.core.Types.NamedType if classSymbol == Symbol.classSymbol("scala.Any") =>
+            // Scala3 opaque type alias
             //----------------------------------------
-            case AndType(left,right) =>
-              val resolvedLeft: RType = Reflector.unwindType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
-              val resolvedRight: RType = Reflector.unwindType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
-              IntersectionInfo(INTERSECTION_CLASS, resolvedLeft, resolvedRight)
+            if typeRef.isOpaqueAlias then
+              val translucentSuperType = typeRef.translucentSuperType
+              AliasInfo(typeRef.show, Reflector.unwindType(reflect, paramMap)(translucentSuperType))
 
-            // Union Type
+            // Any Type
             //----------------------------------------
-            case OrType(left,right) =>
-              val resolvedLeft: RType = Reflector.unwindType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
-              val resolvedRight: RType = Reflector.unwindType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
-              UnionInfo(UNION_CLASS, resolvedLeft, resolvedRight)
+            else
+              PrimitiveType.Scala_Any
 
-            case u => 
-              throw new ReflectException("Unsupported TypeRef: "+typeRef)
-          }
+          // Scala3 Tasty-equipped type incl. primitive types
+          // Traits and classes w/type parameters are *not* here... they're AppliedTypes
+          //----------------------------------------
+          case named: dotty.tools.dotc.core.Types.NamedType => 
+            val isTypeParam = typeRef.typeSymbol.flags.is(Flags.Param)   // Is 'T' or a "real" type?  (true if T)
+            classSymbol match {
+              case cs if isTypeParam     => 
+                // See if we can resolve the type symbol
+                paramMap.get(typeRef.name.asInstanceOf[TypeSymbol]).getOrElse(
+                  TypeSymbolInfo(typeRef.name)  // TypeSymbols Foo[T] have typeRef of Any
+                  )
+              case cs if is2xEnumeration => 
+                val enumerationClassSymbol = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass
+                ScalaEnumerationInfo(typeRef.name, enumerationClassSymbol.fields.map( _.name ))  // get the values of the Enumeration
+              case cs => 
+                reflectOnClass(reflect, paramMap)(typeRef)
+            }
 
-        case Some(classSymbol) =>
-          // Handle gobbled non-class scala.Enumeration.Value (old 2.x Enumeration class values)
-          val (is2xEnumeration, className) = classSymbol.fullName match { 
-            case raw if raw == ENUM_CLASSNAME => 
-              val enumerationClass = typeRef.typeSymbol.fullName
-              if( enumerationClass == ENUM_CLASSNAME ) then
-                // If caller did NOT define a type member (type X = Value) inside their Enumeration class
-                val enumClassName = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass.fullName.dropRight(1) // chop the '$' off the end!
-                (true, enumClassName)
-              else
-                // If caller defined a type member (type X = Value) inside their Enumeration class
-                (true, enumerationClass.dropRight(enumerationClass.length - enumerationClass.lastIndexOf('$')))
-            case _  => (false, classSymbol.fullName)
-          }
+          // Union Type
+          //----------------------------------------
+          case OrType(left,right) =>
+            val resolvedLeft = Reflector.unwindType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
+            val resolvedRight = Reflector.unwindType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
+            UnionInfo(UNION_CLASS, resolvedLeft, resolvedRight)
+        
+          // Most other "normal" Types
+          //----------------------------------------
+          case a @ AppliedType(t,tob) => 
+            val actualArgRTypes = 
+              val typesymregx = """.*\.\_\$(.+)$""".r
+              tob.map{ tpe => tpe.asInstanceOf[reflect.Type].typeSymbol.fullName match {
+                case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
+                case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[reflect.Type]) 
+              }}
 
-          typeRef match {
-            case named: dotty.tools.dotc.core.Types.NamedType if classSymbol == Symbol.classSymbol("scala.Any") =>
-              // Scala3 opaque type alias
-              //----------------------------------------
-              if typeRef.isOpaqueAlias then
-                val translucentSuperType = typeRef.translucentSuperType
-                AliasInfo(typeRef.show, Reflector.unwindType(reflect, paramMap)(translucentSuperType))
+            // Sigh--Array is "different".  Getting type params crashes, likely because its a wrap of a Java Array?
+            val typeMap = t match {
+              case _ if classSymbol.fullName == Clazzes.ScalaArrayClazz.getName => Map("A".asInstanceOf[TypeSymbol] -> actualArgRTypes(0))
+              case _ => getTypeParameters(reflect)(t.classSymbol.get).zip(actualArgRTypes).toMap
+            }
 
-              // Any Type
-              //----------------------------------------
-              else
-                PrimitiveType.Scala_Any
+            val foundType: Option[RType] = ExtractorRegistry.extractors.collectFirst {
+              case e if e.matches(reflect)(classSymbol) => e.extractInfo(reflect, typeMap)(t, tob, classSymbol)   
+            }
 
-            // Scala3 Tasty-equipped type incl. primitive types
-            // Traits and classes w/type parameters are *not* here... they're AppliedTypes
-            //----------------------------------------
-            case named: dotty.tools.dotc.core.Types.NamedType => 
-              val isTypeParam = typeRef.typeSymbol.flags.is(Flags.Param)   // Is 'T' or a "real" type?  (true if T)
-              classSymbol match {
-                case cs if isTypeParam     => 
-                  // See if we can resolve the type symbol
-                  paramMap.get(typeRef.name.asInstanceOf[TypeSymbol]).getOrElse(
-                    TypeSymbolInfo(typeRef.name)  // TypeSymbols Foo[T] have typeRef of Any
-                    )
-                case cs if is2xEnumeration => 
-                  val enumerationClassSymbol = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass
-                  ScalaEnumerationInfo(typeRef.name, enumerationClassSymbol.fields.map( _.name ))  // get the values of the Enumeration
-                case cs => 
-                  reflectOnClass(reflect, paramMap)(typeRef)
-              }
-
-            // Union Type
-            //----------------------------------------
-            case OrType(left,right) =>
-              val resolvedLeft = Reflector.unwindType(reflect, paramMap)(left.asInstanceOf[reflect.TypeRef])
-              val resolvedRight = Reflector.unwindType(reflect, paramMap)(right.asInstanceOf[reflect.TypeRef])
-              UnionInfo(UNION_CLASS, resolvedLeft, resolvedRight)
-          
-            // Most other "normal" Types
-            //----------------------------------------
-            case a @ AppliedType(t,tob) => 
-              // println("Applied..."+paramMap)
-              // println("      t: "+t)
-              // println("    tob: "+tob)
-              // println("")
-
-              val actualArgRTypes = 
-                val typesymregx = """.*\.\_\$(.+)$""".r
-                tob.map{ tpe => tpe.asInstanceOf[reflect.Type].typeSymbol.fullName match {
-                  case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
-                  case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[reflect.Type]) 
-                }}
-
-              val typeSymbols = t.classSymbol.get.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
-
-              val typeMap = typeSymbols.zip(actualArgRTypes).toMap
-
-              val foundType: Option[RType] = ExtractorRegistry.extractors.collectFirst {
-                case e if e.matches(reflect)(classSymbol) => e.extractInfo(reflect, typeMap)(t, tob, classSymbol)   
-              }
-
-              foundType.getOrElse{
-                // === Some other class we need to descend into, including a parameterized Scala class
-                reflectOnClass(reflect, typeMap)(t.asInstanceOf[TypeRef])
-              }
-          
-            case x => 
-              println("oops... "+x)
-              UnknownInfo(className)
-          }
-      }
+            foundType.getOrElse{
+              // === Some other class we need to descend into, including a parameterized Scala class
+              reflectOnClass(reflect, typeMap)(t.asInstanceOf[TypeRef])
+            }
+        
+          case x => 
+            // === No idea!  Unkonwn entity...
+            UnknownInfo(className)
+        }
+    }
 
 
   private def reflectOnClass(reflect: Reflection, paramMap: TypeSymbolMap)(typeRef: reflect.TypeRef): RType = 
@@ -151,9 +156,12 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
 
     val symbol = typeRef.classSymbol.get
  
-    if(symbol.flags.is(reflect.Flags.Trait)) then
+    if symbol.flags.is(reflect.Flags.Scala2X) then
+      Scala2Info(symbol.fullName)
+
+    else if symbol.flags.is(reflect.Flags.Trait) then
       // === Trait ===
-      val typeSymbols = symbol.primaryConstructor.paramSymss.head.map(_.name.toString.asInstanceOf[TypeSymbol])
+      val typeSymbols = getTypeParameters(reflect)(symbol)
       //     >> Sealed Traits
       if symbol.flags.is(reflect.Flags.Sealed) then
         val kidsRTypes = symbol.children.map{ c => 
@@ -184,8 +192,8 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
       // Reflecting Java classes requires the materialized Class, which may be available (e.g. Java collections) or not (e.g. user-written class).
       // See if we can get it...  If not create a proxy.
       scala.util.Try {
-        JavaClassInspector.inspectClass(Class.forName(symbol.fullName), paramMap)
-      }.toOption.getOrElse(JavaClassInfo(symbol.fullName))
+        JavaClassInspector.inspectJavaClass(Class.forName(symbol.fullName), paramMap)
+      }.toOption.getOrElse(JavaClassInfo(symbol.fullName, paramMap))
 
     // === Scala Classes ===
     else if symbol.isClassDef then
@@ -229,10 +237,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
       // Because:  symbol's case fields lose the annotations!  Pulling from contstructor ensures they are retained.
       val caseFields = constructorParamz.head.zipWithIndex.map( p => reflectOnField(reflect, paramMap)(p._1, p._2, dad, fieldDefaultMethods) )
 
-      val orderedTypeParameters = symbol.primaryConstructor.paramSymss match {
-        case Nil => Nil
-        case p   => p.head.filter(_.isType).map(_.name.asInstanceOf[TypeSymbol])
-      }
+      val orderedTypeParameters = getTypeParameters(reflect)(symbol)
 
       if symbol.flags.is(reflect.Flags.Case) then
         // === Case Classes ===
