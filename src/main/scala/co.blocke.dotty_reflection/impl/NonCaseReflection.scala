@@ -73,11 +73,7 @@ trait NonCaseClassInspector:
 
     // Include inherited methods (var & def), including inherited!
     // Produces (val <field>, method <field>_=)
-    // println(s"============[ class ${symbol.fullName} ]")
-    // println("      methods: "+symbol.methods)
-    // println("      fields : "+symbol.fields)
     val getterSetter: List[(Symbol,Symbol)] = symbol.methods.filter(_.name.endsWith("_=")).map{ setter => 
-      // println("... look for "+setter.name.dropRight(2))
       // Trying to get the setter... which could be a val (field) if declared is a var, or it could be a method 
       // in the case of user-written getter/setter... OR it could be defined in the superclass
       symbol.field(setter.name.dropRight(2)) match {

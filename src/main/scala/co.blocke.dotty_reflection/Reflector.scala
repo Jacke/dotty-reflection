@@ -86,7 +86,7 @@ object Reflector:
    *  NOTE: If Class is parameterized, this call can't infer the types of the parameters.  In that case, call reflectOnClassWithParams
    *  NOTE: This is *NOT* a macro!
    */
-  def reflectOnClass(clazz: Class[_]): RType =
+  def reflectOnClass(clazz: Class[_], inTermsOf: Option[TraitInfo] = None): RType =
     val className = clazz.getName
     // See if this is a top-level Scala 2 Enumeration... cumbersome, I know...
     val isEnumeration = scala.util.Try(clazz.getMethod("values")).toOption.map( _.getReturnType.getName == "scala.Enumeration$ValueSet").getOrElse(false)
@@ -96,9 +96,10 @@ object Reflector:
     else
       val structure = TypeStructure(className,Nil)
       this.synchronized {
-        Option(cache.get(structure)).getOrElse{ 
+        val cacheHit = if inTermsOf.isEmpty then Option(cache.get(structure)) else None
+        cacheHit.getOrElse{
           cache.put(structure, SelfRefRType(className))
-          val tc = new TastyInspection(clazz, Map.empty[TypeSymbol,RType])
+          val tc = new TastyInspection(clazz, inTermsOf)
           tc.inspect("", List(className))
           val found = tc.inspected
           cache.put(structure, found)
