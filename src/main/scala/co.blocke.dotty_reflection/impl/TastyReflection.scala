@@ -24,14 +24,6 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
     reflectOnType(reflect, paramMap)(aType.asInstanceOf[TypeRef])
 
   
-  def getTypeParameters(reflect: Reflection)(symbol: reflect.Symbol): List[TypeSymbol] = 
-    symbol.primaryConstructor.paramSymss match {
-      case Nil => Nil
-      case p if p.nonEmpty  => p.head.filter(_.isType).map(_.name.asInstanceOf[TypeSymbol])
-      case _   => Nil
-    }
-
-
   protected def reflectOnType(reflect: Reflection, paramMap: TypeSymbolMap)(typeRef: reflect.TypeRef): RType = 
     import reflect.{_, given _}
 

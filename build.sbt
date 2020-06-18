@@ -1,5 +1,6 @@
 val dottyVersion =  "0.24.0-RC1"
-// val dottyVersion =  "0.25.0-bin-SNAPSHOT"
+// val dottyVersion = "0.25.0-bin-SNAPSHOT"
+// val dottyVersion = "0.25.0-bin-20200608-fa84627-NIGHTLY"
 
 val pubSettings = Seq(
   publishMavenStyle := true,
@@ -36,7 +37,7 @@ lazy val root = project
     libraryDependencies ++= 
       Seq("ch.epfl.lamp" %% "dotty-compiler" % dottyVersion,
       "ch.epfl.lamp" %% "dotty-tasty-inspector" % dottyVersion,
-      "ch.epfl.lamp" %% "tasty-core" % dottyVersion,
-      "org.scalameta" %% "munit" % "0.7.5" % Test
+      "ch.epfl.lamp" %% "tasty-core" % dottyVersion/*,
+      "org.scalameta" %% "munit" % "0.7.5" % Test*/
       )
   )

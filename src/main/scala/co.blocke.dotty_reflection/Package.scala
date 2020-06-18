@@ -22,3 +22,20 @@ class ReflectException(msg: String) extends Exception(msg)
 
 val ENUM_CLASSNAME = "scala.Enumeration.Value"
 
+def getTypeParameters(reflect: scala.tasty.Reflection)(symbol: reflect.Symbol): List[TypeSymbol] = 
+  symbol.primaryConstructor.paramSymss match {
+    case Nil => Nil
+    case p if p.nonEmpty  => p.head.filter(_.isType).map(_.name.asInstanceOf[TypeSymbol])
+    case _   => Nil
+  }
+
+extension ListOps on [A,B](xs: List[A]) {
+  def findMap( p: (A) => Option[B] ): Option[B] = 
+    var these: List[A] = xs
+    while (!these.isEmpty) {
+      val pRet = p(these.head)
+      if pRet.isDefined then return pRet
+      these = these.tail
+    }
+    None
+}

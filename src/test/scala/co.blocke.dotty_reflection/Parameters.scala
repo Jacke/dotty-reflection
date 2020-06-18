@@ -268,10 +268,9 @@ class Parameters extends munit.FunSuite:
   */
 
   test("Nested trait substitutions") {
-    val r = Reflector.reflectOn[T10[T11[Int, T5[Double, Char]], String]]
-    val inst = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
-    // val inst: T10[T11[Int, T5[Double, Char]], String] = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
-    val result = Reflector.reflectOnClass( inst.getClass, Some(r.asInstanceOf[TraitInfo]) )
+    val r = Reflector.reflectOn[T10[T11[Int, T5[Double, Char]], String]].asInstanceOf[TraitInfo]
+    val inst: T10[T11[Int, T5[Double, Char]], String] = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
+    val result = Reflector.reflectOnClass( inst.getClass, Some(r) )
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.TFoo6[A,B,C,D]):
     |   fields:
     |      (0) x: TraitInfo(co.blocke.dotty_reflection.T11[W,Z]):

@@ -1,0 +1,335 @@
+
+
+/*
+    //                parent    -> child
+    type SymMap = Map[TypeSymbol, TypeSymbol|AppliedType]
+
+    extension AppliedOps on (applied: AppliedType) {
+
+      // def foo: Int = 
+      //   val one = List(1,2,3)
+      //   val two: List[Int|Boolean] = List(true,3,false)
+      //   val z: Map[Int, Int|Boolean] = one.zip(two)
+      //   5
+
+      def symMap: Int = 
+        val AppliedType(t,tob) = applied
+        val tpeParms: List[TypeSymbol] = getTypeParameters(reflect)(t.classSymbol.get)
+        val tpeParmValues: List[TypeSymbol | AppliedType] = tob.map( _ match {
+          case a: AppliedType => a
+          case tr: TypeRef    => 
+            println("Here: "+tr)
+            println("Name: "+tr.name)
+            println("Q   : "+tr.qualifier.asInstanceOf[Type].asInstanceOf[ThisType].tref.classSymbol.get.fullName)
+            tr.typeSymbol.name.asInstanceOf[TypeSymbol]
+        })
+        // tpeParms.zipWithIndex.map( (ts,i) => ts -> tpeParmValues(i)).toMap
+        5
+
+      // def applySymMap( s1: SymMap, s2: SymMap ): SymMap = 
+        // Simple symbol->symbol mapping
+        // T -> U \
+        //         ==> T -> V
+        // U -> V /
+
+        // Symol -> AppliedType mapping
+        // T -> AppliedType[Foo[?]]
+        //
+        //
+    }
+
+    case class Journey(
+      findTrait:    TraitInfo,
+      classSymbol:  Symbol,
+      inSymMap:     Map[TypeSymbol,TypeSymbol],
+      inTypeMap:    TypeSymbolMap,
+      typeMapSoFar: TypeSymbolMap = Map.empty[TypeSymbol,RType]
+    )
+
+    // object ExtractAppliedType {
+    //   def unapply(a: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_]): Option[AppliedType] = Some(a.tpe.asInstanceOf[reflect.AppliedType])
+    // }
+
+    // object UpTree {
+    //   def unapply(a: (AppliedType,TraitInfo,Map[TypeSymbol,TypeSymbol],TypeSymbolMap)): Option[TypeSymbolMap] = 
+    //     findTraitInParents(a._2, a._1.tycon.classSymbol.get, a._3, a._4)
+    // }
+
+    def findTraitInParents( journey: Journey ): Option[TypeSymbolMap] =
+      import journey._
+
+      println("InSym: "+inSymMap)
+      // it's me
+      if classSymbol.fullName == findTrait.name then
+        Some( typeMapSoFar ++ inSymMap.map{ (k,v) => (k, inTypeMap(v)) }.toMap )
+
+      else
+        // Is it in my direct parentage?
+        val classDef = classSymbol.tree.asInstanceOf[ClassDef]
+        val foundAppliedType = classDef.parents.collect {
+          case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] => 
+            val z = att.tpe.asInstanceOf[AppliedType]
+            println("ZZZ: "+z.symMap)
+        }
+        /*
+        val foundAppliedType = classDef.parents.collectFirst {
+          case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] if att.tpe.asInstanceOf[AppliedType].tycon.asInstanceOf[reflect.TypeRef].typeSymbol.fullName == findTrait.name => 
+            att.tpe.asInstanceOf[AppliedType]
+        }
+        // Look thru all foundAppliedType's "tob" (parameter values).  They will either be a type symbol,e.g. T, or another AppliedType (nested trait)
+        foundAppliedType.map{ found =>
+          val AppliedType(t,tob) = found
+          val aTypesParamList = t.typeSymbol.primaryConstructor.paramSymss.head.map(_.name.asInstanceOf[TypeSymbol])
+          val newJourney = tob.zipWithIndex.foldLeft(journey){ (j, tobAndIndex) =>
+            tobAndIndex match {
+              case (AppliedType(t2,tob2), i) => 
+                println("Something else: "+t2.classSymbol.get.fullName)
+                println("With params: "+tob2)
+                j
+              case (tr: TypeRef, i)          => 
+                println("NewTS: "+tr.typeSymbol.name.asInstanceOf[TypeSymbol])
+                println("i: "+i)
+                println("Which: "+aTypesParamList(i))
+                val fixedSymMap = 
+                  if j.inSymMap.nonEmpty then
+                    j.inSymMap + (tr.typeSymbol.name.asInstanceOf[TypeSymbol] -> aTypesParamList(i))
+                  else
+                    Map(tr.typeSymbol.name.asInstanceOf[TypeSymbol] -> aTypesParamList(i))
+                j.copy(inSymMap = fixedSymMap)
+            }
+          }
+          println("NEW: "+newJourney.inSymMap)
+        }.orElse {
+          
+          // Not found among direct parents... nav up the parentage tree...
+          var holder = 0
+          def isHit(applied: AppliedType): Boolean = {
+            val AppliedType(t,tob) = applied
+    //   def unapply(a: (AppliedType,TraitInfo,Map[TypeSymbol,TypeSymbol],TypeSymbolMap)): Option[TypeSymbolMap] = 
+            // sym-2-sym map ( T -> M )
+            val myParms = getTypeParameters(reflect)(t.classSymbol.get)
+            println(s"(${t.classSymbol.get.fullName}) My params: "+myParms)
+            // val symMap = getTypeParameters(reflect)(t.classSymbol.get).zip(tob.map(_.asInstanceOf[TypeRef].typeSymbol.name.asInstanceOf[TypeSymbol])).toMap
+            // // ts-2-rtype map
+            // typeMap.map{ (ts, rtpe) => (symMap(ts), rtpe) }.toMap     
+            // val j2 = journey.copy()
+            false
+
+            // Symbols in class --> symbols or AppliedType full of symbols|types
+            // findTraitInParents(a._2, a._1.tycon.classSymbol.get, a._3, a._4)
+            // trait foo[T] extends bar[thing[T]]
+            // trait bar[X]
+          }
+          classDef.parents.collectFirst{ 
+            case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] if isHit(att.tpe.asInstanceOf[AppliedType]) => holder
+          }
+            // update symMap with new entries from parent's type symbols and recurse thru findTraitInParents()
+
+        }
+        */
+        None
+        */
+
+
+
+    /*
+    // Starting with a class' symbol, nav up the inheritance tree until the desired findTrait is found in class' parentage
+    // TODO: Returned AppliedType needs to be accompanied by a symbol map connecting class' symbols->trait's type params,
+    //   i.e. it shoudl be in terms of class
+    def findTraitInParents( findTrait: TraitInfo, classSymbol: Symbol, inSymMap: Map[TypeSymbol,TypeSymbol], inTypeMap: TypeSymbolMap ): Option[TypeSymbolMap] =
+      println("InSymMap: "+inSymMap)
+      println("Class: "+classSymbol)
+      println("---------(1)")
+      // it's me
+      if classSymbol.fullName == findTrait.name then
+        Some( inSymMap.map{ (k,v) => (k, inTypeMap(v)) }.toMap )
+        
+      else
+        // it's in my parentage
+        val classDef = classSymbol.tree.asInstanceOf[ClassDef]
+        val aType = classDef.parents.collectFirst {
+          case ExtractAppliedType(a) =>
+            val AppliedType(t,tob) = a
+            val aTypesParamList = t.typeSymbol.primaryConstructor.paramSymss.head.map(_.name.asInstanceOf[TypeSymbol])
+            val tobSymOrNot = tob.map( _ match {
+              case tr: TypeRef          => tr.typeSymbol.name.asInstanceOf[TypeSymbol]
+              case applied: AppliedType => applied // some trait
+            })
+            val symMap = tobSymOrNot.zip(aTypesParamList).toMap
+            // val symMap = tob.map(_.asInstanceOf[TypeRef].typeSymbol.name.asInstanceOf[TypeSymbol]).zip(aTypesParamList).toMap
+            val fixedSymMap = 
+              if inSymMap.nonEmpty then
+                inSymMap.map{ (symOrApplied,classParentSym) => 
+                  symOrApplied match {
+                    case Applied(t,tob) =>
+                      ???
+                    case ts: TypeSymbol => (ts, symMap(classParentSym)) 
+                  }
+                }.toMap
+              else
+                symMap
+            println("Fixed map: "+fixedSymMap)
+            println("---------(2)")
+            (a, fixedSymMap)
+        }.map(a => (a._1, findTrait, a._2, inTypeMap)).collectFirst {
+          case UpTree(sym) => sym
+        }
+        aType
+        */
+
+
+/*
+
+classSymbol in --> Map[TypeSymbol, RType] out
+
+    def findTraitInParents( ito: TraitInfo , classSymbol: Symbol ): Option[TypeSymbolMap] = 
+      val itoParamMap = ito.orderedTypeParameters.zip(ito.actualParameterTypes).toMap
+      val classDef = classSymbol.tree.asInstanceOf[ClassDef]
+
+      if classSymbol.fullName == ito.name then
+        Some(itoParamMap)
+
+      else
+        // First pass...
+        classDef.parents.collectFirst {
+          case ExtractAppliedType(a) if a.tycon.asInstanceOf[reflect.TypeRef].typeSymbol.fullName == ito.name => 
+            val AppliedType(_, tob) = a
+            // Map Types for Clazz --> Types for Trait, but...
+            val stage1 = ito.orderedTypeParameters.zip(tob)  // trait's type symbols --> type symbols in terms of clazz (clazz's type symbols)
+            println("Stage 1 ..... "+stage1.map(_.toString).mkString("\n"))
+            println("==========")
+            println(itoParamMap)
+            val stage2 = stage1.map{ (typeSym, tpe) =>
+              tpe match {
+                case AppliedType(t2,tob2) => 
+                  println("===> "+t2.classSymbol.get.fullName)
+                  println("Tob2: "+tob2)
+                  val clazz2 = Class.forName(t2.classSymbol.get.fullName)
+                  val z = Reflector.reflectOnClass(clazz2, Some(itoParamMap(typeSym).asInstanceOf[TraitInfo]))
+                  println("z: "+z)
+                  ("Z".asInstanceOf[TypeSymbol],PrimitiveType.Scala_Int)
+                case simpleTob => (simpleTob.asInstanceOf[TypeRef].typeSymbol.name.asInstanceOf[TypeSymbol], itoParamMap(typeSym))
+              }
+            }.toMap
+            stage2
+            //------------
+            /*
+            println("Found : "+tob)
+            tob.map{ _ match {
+              case AppliedType(t2,tob2) =>
+              case simpleTob => simpleTob.asInstanceOf[TypeRef].typeSymbol.name.asInstanceOf[TypeSymbol]
+            }}
+            // Here when unpacking tob we likley need to differentiate between a type parameter and a nested trait/class
+            val symMap = inTermsOf.get.orderedTypeParameters.zip(tob.map(_.asInstanceOf[TypeRef].typeSymbol.name.asInstanceOf[TypeSymbol])).toMap
+            println("------\n"+symMap+"\n")
+            // now sew it all together...
+            println("------\n"+inTermsOfParamMap+"\n")
+            // Need to flatten mapping:  TFoo6[A, B, C, D](x: T11[C, T5[D, A]], y: B) extends T10[T11[C, T5[D, A]], B]
+            // Gotta unpack T11 and map C, D, and A
+            inTermsOfParamMap.map{ (ts, rtpe) => (symMap(ts), rtpe) }.toMap
+            */
+        }.orElse{
+          // nope... ascend the tree
+          classDef.parents.collect {
+            case ExtractAppliedType(a) => a
+          }.map(a => (a, ito)).collectFirst {
+            case ExtractTypeMap(tm) => 
+              val (applied, typeMap) = tm
+              val AppliedType(t, tob) = applied
+              // sym-2-sym map ( T -> M )
+              val symMap = getTypeParameters(reflect)(t.classSymbol.get).zip(tob.map(_.asInstanceOf[TypeRef].typeSymbol.name.asInstanceOf[TypeSymbol])).toMap
+              // ts-2-rtype map
+              typeMap.map{ (ts, rtpe) => (symMap(ts), rtpe) }.toMap
+          }
+        }
+        */
+
+    
+
+
+        /*
+    def findTypeSymValues( lookForSyms: List[PathSymbol], inClass: Symbol, typedTrait: TraitInfo ): Option[TypeSymbolMap] =
+      // it's me
+      if inClass.fullName == typedTrait.name then
+        Some(typedTrait.orderedTypeParameters.zip( typedTrait.actualParameterTypes ).toMap)
+
+        /*
+      // it's somewhere in my parentage...
+      else
+        var found: TypeSymbolMap = null
+        def foundTypeSym(parent: Tree): Boolean =
+          parent match {
+            case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] =>
+              val classSymbol = att.tpe.asInstanceOf[AppliedType].tycon.asInstanceOf[reflect.TypeRef].classSymbol.get
+              println("Da Class: "+classSymbol)
+              val AppliedType(t,tob) = att.tpe.asInstanceOf[AppliedType]
+              val classTypesParamList = t.typeSymbol.primaryConstructor.paramSymss.head.map{ x =>
+                val TypeSymPath(tsn) = x.fullName
+                (tsn, x.name.asInstanceOf[TypeSymbol])
+              }
+              val tobResolved = tob.map( _ match {
+                case AppliedType(t2,tob2) => ???
+                case tr: TypeRef => 
+                  val TypeSymPath(tsn) = tr.typeSymbol.fullName
+                  (tsn, tr.typeSymbol.name.asInstanceOf[TypeSymbol])
+              })
+              val symMap = classTypesParamList.zip(tobResolved).toMap
+              println("Class Param List : "+classTypesParamList)
+              println("tob resolved: "+tobResolved)
+              println("Sym Map: "+symMap)
+              findTypeSymValues( tobResolved, classSymbol, typedTrait).map( typeSymMap =>
+                val TypeSymPath(tsn) = classSymbol.fullName
+                found = typeSymMap.map{ (k,v) => (symMap((classSymbol.fullName,k))._2, v) }.toM
+              ).isDefined
+          }
+
+        if inClass.tree.asInstanceOf[ClassDef].parents.find(foundTypeSym(_)).isDefined then
+          Some(found)
+        else
+          None
+
+        //----------
+        val parents = inClass.tree.asInstanceOf[ClassDef].parents
+        var found = ???
+        for( dad <- parents ) {
+          dad match {
+            case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] =>
+            // if att.tpe.asInstanceOf[AppliedType].tycon.asInstanceOf[reflect.TypeRef].typeSymbol.fullName == typedTrait.name => 
+          }
+        }
+        */
+        //----------
+      else
+        inClass.tree.asInstanceOf[ClassDef].parents.collectFirst {
+          case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] if att.tpe.asInstanceOf[AppliedType].tycon.asInstanceOf[reflect.TypeRef].typeSymbol.fullName == typedTrait.name => 
+            // map symbols to find...
+            val classSymbol = att.tpe.asInstanceOf[AppliedType].tycon.asInstanceOf[reflect.TypeRef].classSymbol.get
+            println("Da Class: "+classSymbol)
+            val AppliedType(t,tob) = att.tpe.asInstanceOf[AppliedType]
+            val classTypesParamList = t.typeSymbol.primaryConstructor.paramSymss.head.map{ x =>
+              val TypeSymPath(tsn) = x.fullName
+              (tsn, x.name.asInstanceOf[TypeSymbol])
+            }
+            val tobResolved = tob.map( _ match {
+              case AppliedType(t2,tob2) => ???
+              case tr: TypeRef => 
+                val TypeSymPath(tsn) = tr.typeSymbol.fullName
+                (tsn, tr.typeSymbol.name.asInstanceOf[TypeSymbol])
+            })
+            val symMap = classTypesParamList.zip(tobResolved).toMap
+            println("Class Param List : "+classTypesParamList)
+            println("tob resolved: "+tobResolved)
+            println("Sym Map: "+symMap)
+            val found = findTypeSymValues( tobResolved, classSymbol, typedTrait)
+            println("Found: "+found)
+            val TypeSymPath(tsn) = classSymbol.fullName
+            found.get.map{ (k,v) => (symMap((classSymbol.fullName,k))._2, v) }.toMap
+
+        // Not found in direct parents... climb up inheritance tree
+        // }.orElse {
+        //   inClass.tree.asInstanceOf[ClassDef].parents.collectFirst {
+        //     case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] => 
+        //       val applied = att.tpe.asInstanceOf[AppliedType]
+        //   }
+        // }
+*/
