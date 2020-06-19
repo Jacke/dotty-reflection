@@ -1,5 +1,5 @@
 package co.blocke.dotty_reflection
-
+import scala.runtime.Statics.releaseFence
 
 /** Mnemonic symbol for a type--typically a paramaterized type, e.g. Foo[T], where T is the symbol */
 opaque type TypeSymbol = String 
@@ -38,4 +38,21 @@ extension ListOps on [A,B](xs: List[A]) {
       these = these.tail
     }
     None
+
+  def filterMap(p: A => Option[B]): List[B] = 
+    def doit(l: List[A], acc: List[B]): List[B] = {
+      if (l.isEmpty)
+        acc
+      else {
+        val retVal = p(l.head)
+        val newAcc = if retVal.isDefined then
+            acc :+ retVal.get
+          else 
+            acc
+        doit(l.tail, newAcc)
+      }
+    }
+    val result = doit(xs, Nil)
+    releaseFence()
+    result
 }
