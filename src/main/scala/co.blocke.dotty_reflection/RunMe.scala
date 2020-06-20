@@ -48,8 +48,8 @@ object RunMe extends App:
 
   // Simple multi-level case
   //--------------------------
-  val f = Reflector.reflectOn[Basement[Int]].asInstanceOf[TraitInfo]
-  println(Reflector.reflectOnClass(Class.forName("co.blocke.dotty_reflection.Top"), Some(f)))
+  // val f = Reflector.reflectOn[Basement[Int]].asInstanceOf[TraitInfo]
+  // println(Reflector.reflectOnClass(Class.forName("co.blocke.dotty_reflection.Top"), Some(f)))
 
   // 1 level of indirection
   //--------------------------
@@ -61,9 +61,9 @@ object RunMe extends App:
   //   case _ => println("Boom...")
   // }
 
-  // val inst: T10[T11[Int, T5[Double, Char]], String] = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
-  // val r = Reflector.reflectOn[T10[T11[Int, T5[Double, Char]], String]].asInstanceOf[TraitInfo]
-  // println(Reflector.reflectOnClass( inst.getClass, Some(r) ))
+  val inst: T10[T11[Int, T5[Double, Char]], String] = TFoo6(TBlah1(5, TBar7(1.2, 'Z')), "wow")
+  val r = Reflector.reflectOn[T10[T11[Int, T5[Double, Char]], String]].asInstanceOf[TraitInfo]
+  println(Reflector.reflectOnClass( inst.getClass, Some(r) ))
 
   // val f = Reflector.reflectOn[Foom[Int]].asInstanceOf[TraitInfo]
   // println(f)
