@@ -7,7 +7,6 @@ import java.util.Optional
 
 class Parameters extends munit.FunSuite:
 
-/*
   test("0-level param substitution") {
     val result = Reflector.reflectOn[DuoTypes[Int,Float]].asInstanceOf[ScalaCaseClassInfo]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.DuoTypes[Q,U]):
@@ -226,7 +225,6 @@ class Parameters extends munit.FunSuite:
     |         fields:
     |            (0) message: java.lang.String""".stripMargin)
   }
-  */
 
   /* Performance tests
   var rtx: RType = null
