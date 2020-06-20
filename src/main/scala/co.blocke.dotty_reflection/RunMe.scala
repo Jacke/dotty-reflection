@@ -10,17 +10,6 @@ trait Base[B] extends Basement[B]
 trait Mid[M] extends Base[M]
 case class Top[T]( b: T ) extends Mid[T]
 
-trait T5[X, Y] { val thing1: X; val thing2: Y }
-trait T10[X, Y] { val x: X; val y: Y }
-trait T11[W, Z] { val w: W; val z: Z }
-case class TFoo6[A, B, C, D](x: T11[C, T5[D, A]], y: B) extends T10[T11[C, T5[D, A]], B]
-case class TBlah1[A, B](w: A, z: B) extends T11[A, B]
-case class TBar7[A, B](thing1: A, thing2: B) extends T5[A, B]
-
-
-trait Level2[W]{ val w: W }
-trait Level1[T,U]{ val t: T; val u: U }
-case class Level0[X,Y]( t: Level2[Y], u: X ) extends Level1[Level2[Y],X]
 // Also try...
 // case class Level0[X,Y]( t: Level2[Y,X], u: X ) extends Level1[Level2[Y,X],X]
 // case class SomeChildOfLevel2[P]( w: P ) etends Level2[P]
@@ -40,9 +29,22 @@ case class Level0[X,Y]( t: Level2[Y], u: X ) extends Level1[Level2[Y],X]
 //
 // For Liftable, we need to associate Thing.V -> Stackable.X -> Movable.N, which resolves to Liftable[String], from which we further unpack and associate Thing.V -> String
 
+trait Level2[W]{ val w: W }
+trait Level1[T,U]{ val t: T; val u: U }
+case class Level0[X,Y]( t: Level2[Y], u: X ) extends Level1[Level2[Y],X]
 
-trait Foom[T]{ val t: T }
-case class Noom[N]( t: N ) extends Foom[N]
+
+// trait Foom[T]{ val t: T }
+// case class Noom[N]( t: N ) extends Foom[N]
+
+
+trait T5[X, Y] { val thing1: X; val thing2: Y }
+trait T10[X, Y] { val x: X; val y: Y }
+trait T11[W, Z] { val w: W; val z: Z }
+case class TFoo6[A, B, C, D](x: T11[C, T5[D, A]], y: B) extends T10[T11[C, T5[D, A]], B]
+case class TBlah1[A, B](w: A, z: B) extends T11[A, B]
+case class TBar7[A, B](thing1: A, thing2: B) extends T5[A, B]
+
 
 object RunMe extends App:
 

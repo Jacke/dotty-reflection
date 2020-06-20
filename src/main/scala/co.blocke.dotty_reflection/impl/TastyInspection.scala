@@ -24,6 +24,103 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
     type PathSymbol = (String, TypeSymbol)
     val TypeSymPath = """(.*)\..+$""".r
 
+
+    def unpackAppliedType( applied: AppliedType, lookForSyms: List[PathSymbol], typedTrait: TraitInfo ): Option[TypeSymbolMap] =
+      val classSymbol = applied.tycon.asInstanceOf[reflect.TypeRef].classSymbol.get
+      val AppliedType(classType, classTypeArgValues) = applied
+      val classTypesParamList = classType.typeSymbol.primaryConstructor.paramSymss.head.map{ x =>
+        val TypeSymPath(tsn) = x.fullName
+        (tsn, x.name.asInstanceOf[TypeSymbol])
+      }
+      // Resolve the simple types 'T' first
+      val symMap = classTypeArgValues.zipWithIndex.collect {
+        case (tr: TypeRef,i) => 
+          val TypeSymPath(tsn) = tr.typeSymbol.fullName
+          ((tsn, tr.typeSymbol.name.asInstanceOf[TypeSymbol]), classTypesParamList(i))
+      }.toMap
+      val invertedSymMap = symMap.map(_.swap)
+      val newLookForSyms = lookForSyms.map( s => symMap.getOrElse(s, s) )
+      val simpleSymbols = findTypeSymValues2(newLookForSyms, classSymbol, typedTrait,-1).map( typeSymMap => {
+        // Now unwind any chained types
+        val TypeSymPath(tsn) = classSymbol.fullName
+        typeSymMap.map{ (k,v) => 
+            val maybeSym = invertedSymMap.get( (classSymbol.fullName,k) )
+            maybeSym match {
+              case Some((_,s)) => s -> v
+              case None => k -> v
+            }
+          }.toMap
+      })
+      
+      // Now resolve any nested Traits (AppliedTypes)
+      val nestedTraits = classTypeArgValues.zipWithIndex.findMap( a => a match {
+        case (a: AppliedType, i: Int) => 
+          // do stuff to stage call...
+          val AppliedType(t2,tob2) = a
+          val childClassSym = t2.classSymbol.get
+          val childClassTypesParamList = t2.typeSymbol.primaryConstructor.paramSymss.head.map{ cls =>
+            val TypeSymPath(tsn) = cls.fullName
+            (tsn, cls.name.asInstanceOf[TypeSymbol])
+          }
+          val nestedSymMap = tob2.zipWithIndex.collect {
+            case (tr: TypeRef,i) => 
+              val TypeSymPath(tsn) = tr.typeSymbol.fullName
+              ((tsn, tr.typeSymbol.name.asInstanceOf[TypeSymbol]), childClassTypesParamList(i))
+          }.toMap
+          val newLookForSyms2 = lookForSyms.map( s =>
+            nestedSymMap.getOrElse(s, s)
+            )
+          val invertedSymMap = nestedSymMap.map(_.swap)
+          val diveIntoTrait = typedTrait.actualParameterTypes(i).asInstanceOf[TraitInfo]
+          unpackAppliedType(a, newLookForSyms2, diveIntoTrait).map( typeSymMap => {
+            // Now unwind any chained types
+            val TypeSymPath(tsn) = childClassSym.fullName
+            typeSymMap.map{ (k,v) => 
+                val maybeSym = invertedSymMap.get( (childClassSym.fullName,k) )
+                maybeSym match {
+                  case Some((_,s)) => s -> v
+                  case None => k -> v
+                }
+              }.toMap
+          })
+        case _ => None
+      })
+      (nestedTraits, simpleSymbols) match {
+        case (None,None) => None
+        case (Some(n:TypeSymbolMap), None) => Some(n)
+        case (None, Some(s:TypeSymbolMap)) => Some(s)
+        case (Some(n:TypeSymbolMap), Some(s:TypeSymbolMap)) => Some( s ++ n )
+      }
+      
+
+    def findTypeSymValues2(
+        lookForSyms: List[PathSymbol], 
+        inClass: Symbol, 
+        typedTrait: TraitInfo, 
+        // xsymMap: Map[PathSymbol,PathSymbol] = Map.empty[PathSymbol,PathSymbol],
+        level: Int = 0
+      ): Option[TypeSymbolMap] =
+      
+      // it's me
+      if inClass.fullName == typedTrait.name then
+        val myMap = typedTrait.orderedTypeParameters.zip( typedTrait.actualParameterTypes ).toMap
+        Some(lookForSyms.collect{
+            case s if myMap.contains(s._2) => (s._2 -> myMap(s._2))
+          }.toMap)
+
+      // it's somewhere in my parentage...
+      else
+        inClass.tree.asInstanceOf[ClassDef].parents.findMap( parent => { // return Option[TypeSymbolMap]
+          parent match {
+            case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] => unpackAppliedType( att.tpe.asInstanceOf[AppliedType], lookForSyms, typedTrait )
+            case _ => None
+          }
+        })
+
+
+
+    //-----------------------------------------------------------
+
     def findTypeSymValues(
         lookForSyms: List[PathSymbol], 
         inClass: Symbol, 
@@ -63,7 +160,7 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
                   }
                   println(tabs(level)+"    HERE INSIDE "+childClassSym)
                   println(tabs(level)+"    t: "+t2)
-                  println(tabs(level)+"    tob: "+tob2)
+                  println(tabs(level)+"    tob: \n"+tob2.map(x => tabs(level)+"       "+x.toString).mkString("\n"))
                   println(tabs(level)+"    ClassTypesList: "+classTypesParamList2)
                   val symMap = tob2.zipWithIndex.collect {
                     case (tr: TypeRef,i) => 
@@ -88,8 +185,39 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
                         }
                       }.toMap
                   })
-                  println("    ==> "+appliedSymbols)
-                  appliedSymbols
+
+                  // Get the simple types 'T'
+                  val simpleSymMap = tob2.zipWithIndex.collect {
+                    case (tr: TypeRef,i) => 
+                      val TypeSymPath(tsn) = tr.typeSymbol.fullName
+                      ((tsn, tr.typeSymbol.name.asInstanceOf[TypeSymbol]), classTypesParamList2(i))
+                  }.toMap
+                  println(tabs(level)+ "   Simple Applied Types: "+simpleSymMap)
+                  val invertedSymMap2 = simpleSymMap.map(_.swap)
+                  val newLookForSyms = lookForSyms.map( s =>
+                    simpleSymMap.getOrElse(s, s)
+                    )
+                  println(tabs(level)+ "   Simple LookFor: "+newLookForSyms)
+                  val simpleSymbols = findTypeSymValues(newLookForSyms, childClassSym, typedTrait.actualParameterTypes(i).asInstanceOf[TraitInfo],-1).map( typeSymMap => {
+                    // Now unwind any chained types
+                    val TypeSymPath(tsn) = childClassSym.fullName
+                    typeSymMap.map{ (k,v) => 
+                        val maybeSym = invertedSymMap2.get( (childClassSym.fullName,k) )
+                        maybeSym match {
+                          case Some((_,s)) => s -> v
+                          case None => k -> v
+                        }
+                      }.toMap
+                  })
+                  val appliedFinal = (appliedSymbols, simpleSymbols) match {
+                    case (None,None) => None
+                    case (Some(n:TypeSymbolMap), None) => Some(n)
+                    case (None, Some(s:TypeSymbolMap)) => Some(s)
+                    case (Some(n:TypeSymbolMap), Some(s:TypeSymbolMap)) => Some( s ++ n )
+                  }
+
+                  println("    ==> "+appliedFinal)
+                  appliedFinal
                 case _ => None
               })
               println("=== Nested: "+nestedTraits)
@@ -152,7 +280,7 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
           // Now associate Lost.L -> Findable.F and finally L -> Int
           if inTermsOf.isDefined then   
             val classSymbol = tpe.classSymbol.get
-            findTypeSymValues( getTypeParameters(reflect)(classSymbol).map(ts => (classSymbol.fullName,ts)), classSymbol, inTermsOf.get )
+            findTypeSymValues2( getTypeParameters(reflect)(classSymbol).map(ts => (classSymbol.fullName,ts)), classSymbol, inTermsOf.get )
               .getOrElse(throw new ReflectException(s"${inTermsOf.get.name} is not a parent of ${clazz.getName}"))
             // inTermsOfParamMap
           else 
