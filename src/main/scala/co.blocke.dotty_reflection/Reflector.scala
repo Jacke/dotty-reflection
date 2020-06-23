@@ -36,7 +36,8 @@ object Reflector:
   def unwindType(reflect: Reflection, paramMap: TypeSymbolMap)(aType: reflect.Type): RType =
     import reflect.{_, given _}
 
-    val structure = discoverStructure(reflect)(aType)
+    val structure = discoverStructure(reflect,paramMap)(aType)
+    println(">> "+structure)
     this.synchronized {
       Option(cache.get(structure)).getOrElse{ 
         // Any is a special case... It may just be an "Any", or something else, like a opaque type alias.
@@ -52,14 +53,17 @@ object Reflector:
     }
 
     
-  def discoverStructure(reflect: Reflection)(aType: reflect.Type): TypeStructure =
+  def discoverStructure(reflect: Reflection, paramMap: TypeSymbolMap)(aType: reflect.Type): TypeStructure =
     import reflect.{_, given _}
 
     aType match {
       case AppliedType(t,tob) =>
         val className = t.asInstanceOf[TypeRef].classSymbol.get.fullName
         val res = tob.map(_.asInstanceOf[TypeRef].classSymbol.get.fullName)
-        val params = tob.map( tb => discoverStructure(reflect)(tb.asInstanceOf[Type]) )
+        val params = tob.map{ tpe => tpe.asInstanceOf[reflect.Type].typeSymbol.fullName match {
+          case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol]).toTypeStructure
+          case _ => discoverStructure(reflect,paramMap)(tpe.asInstanceOf[Type]) 
+        }}
         TypeStructure(className, params)
       case tr: TypeRef => 
         val className = tr.classSymbol.get.fullName
@@ -68,16 +72,14 @@ object Reflector:
         else
           TypeStructure(className, Nil)
       case OrType(left,right) =>
-        val resolvedLeft = discoverStructure(reflect)(left.asInstanceOf[Type])
-        val resolvedRight = discoverStructure(reflect)(right.asInstanceOf[Type])
+        val resolvedLeft = discoverStructure(reflect,paramMap)(left.asInstanceOf[Type])
+        val resolvedRight = discoverStructure(reflect,paramMap)(right.asInstanceOf[Type])
         TypeStructure(UNION_CLASS, List(resolvedLeft, resolvedRight))
       case AndType(left,right) =>
-        val resolvedLeft = discoverStructure(reflect)(left.asInstanceOf[Type])
-        val resolvedRight = discoverStructure(reflect)(right.asInstanceOf[Type])
+        val resolvedLeft = discoverStructure(reflect,paramMap)(left.asInstanceOf[Type])
+        val resolvedRight = discoverStructure(reflect,paramMap)(right.asInstanceOf[Type])
         TypeStructure(INTERSECTION_CLASS, List(resolvedLeft, resolvedRight))
       case z @ TermRef(tob, name) =>
-        println(s"TERM FOUND $name >>> "+tob)
-        println("Z: "+z)
         TypeStructure(name, Nil)
     }
 

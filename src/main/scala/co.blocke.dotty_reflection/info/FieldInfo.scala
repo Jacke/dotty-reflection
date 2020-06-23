@@ -14,13 +14,13 @@ trait FieldInfo extends Serializable:
 
   def reIndex(i: Int): FieldInfo
 
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
     {if(!supressIndent) tabs(tab) else ""} 
       + s"(${if !modified then index else '_'})" 
       + {if originalSymbol.isDefined then s"[${originalSymbol.get}]" else ""}
       + s" $name: " 
-      + fieldType.show(newTab,true) 
+      + fieldType.show(newTab,name :: seenBefore,true) 
       + { if annotations.nonEmpty then tabs(newTab) + "annotations: " + annotations.toString + "\n" else "" }
 
 

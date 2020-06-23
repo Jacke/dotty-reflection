@@ -10,7 +10,8 @@ class Enums extends munit.FunSuite:
     val result = Reflector.reflectOn[co.blocke.reflect.JavaEnum]
     assertEquals( result.show(), """JavaClassInfo(co.blocke.reflect.JavaEnum):
     |   fields:
-    |      (0) color: JavaEnumInfo(co.blocke.reflect.Color)""".stripMargin)
+    |      (0) color: JavaEnumInfo(co.blocke.reflect.Color)
+    |""".stripMargin)
   }
 
   test("Scala Enums (old and new)") {
@@ -18,5 +19,6 @@ class Enums extends munit.FunSuite:
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Birthday):
     |   fields:
     |      (0) m: ScalaEnumInfo with values [Jan,Feb,Mar]
-    |      (1) d: ScalaEnumerationInfo with values [Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday]""".stripMargin)
+    |      (1) d: ScalaEnumerationInfo with values [Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday]
+    |""".stripMargin)
   }

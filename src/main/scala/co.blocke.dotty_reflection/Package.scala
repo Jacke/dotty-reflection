@@ -22,6 +22,8 @@ class ReflectException(msg: String) extends Exception(msg)
 
 val ENUM_CLASSNAME = "scala.Enumeration.Value"
 
+val typesymregx = """.*\.\_\$(.+)$""".r
+
 def getTypeParameters(reflect: scala.tasty.Reflection)(symbol: reflect.Symbol): List[TypeSymbol] = 
   symbol.primaryConstructor.paramSymss match {
     case Nil => Nil

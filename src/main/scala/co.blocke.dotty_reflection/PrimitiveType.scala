@@ -28,5 +28,5 @@ enum PrimitiveType(val name: String, val _infoClass: Class[_]) extends RType:
   case Java_Object   extends PrimitiveType("java.lang.Object", ObjectClazz)
   case Java_Number   extends PrimitiveType("java.lang.Number", JNumberClazz)
 
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.name + "\n"

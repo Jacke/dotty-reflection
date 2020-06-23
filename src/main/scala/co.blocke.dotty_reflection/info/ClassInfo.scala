@@ -1,9 +1,8 @@
 package co.blocke.dotty_reflection
 package info
 
-// import impl.ClassOrTrait
 
-trait ClassInfo extends RType: // TODO with ClassOrTrait:
+trait ClassInfo extends RType: 
   val name:                       String
   lazy val fields:                Array[FieldInfo]
   lazy val orderedTypeParameters: List[TypeSymbol]
@@ -17,6 +16,7 @@ trait ClassInfo extends RType: // TODO with ClassOrTrait:
 case class ScalaCaseClassInfo protected[dotty_reflection] (
     name:                   String,
     _orderedTypeParameters: List[TypeSymbol],
+    actualParameterTypes:   Array[RType],
     _typeMembers:           Array[TypeMemberInfo],
     _fields:                Array[FieldInfo],
     _annotations:           Map[String, Map[String,String]],
@@ -40,13 +40,11 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
   lazy val constructor = 
     infoClass.getConstructor(fields.map(_.asInstanceOf[ScalaFieldInfo].constructorClass):_*)
 
-  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals.toArray)
-
   // Used for ScalaJack writing of type members ("external type hints").  If some type members are not class/trait, it messes up any
   // type hint modifiers, so for the purposes of serialization we want to filter out "uninteresting" type members (e.g. primitives)
   def filterTraitTypeParams: ScalaCaseClassInfo = this.copy( _typeMembers = typeMembers.filter(tm => tm.memberType.isInstanceOf[TraitInfo] || tm.memberType.isInstanceOf[ScalaCaseClassInfo]) )
 
-  def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab:Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
@@ -63,6 +61,7 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
 case class ScalaClassInfo protected[dotty_reflection] (
     name:                   String,
     _orderedTypeParameters: List[TypeSymbol],
+    actualParameterTypes:   Array[RType],
     _typeMembers:           Array[TypeMemberInfo],
     _fields:                Array[FieldInfo],  // constructor fields
     nonConstructorFields:   Array[FieldInfo],
@@ -87,23 +86,24 @@ case class ScalaClassInfo protected[dotty_reflection] (
   lazy val constructor = 
     infoClass.getConstructor(fields.map(_.asInstanceOf[ScalaFieldInfo].constructorClass):_*)
     
-  def setActualTypeParams( actuals: List[TypeMemberInfo] ) = this.copy(_typeMembers = actuals.toArray)
-
   // Used for ScalaJack writing of type members ("external type hints").  If some type members are not class/trait, it messes up any
   // type hint modifiers, so for the purposes of serialization we want to filter out "uninteresting" type members (e.g. primitives)
   def filterTraitTypeParams: ScalaClassInfo = this.copy( _typeMembers = typeMembers.filter(tm => tm.memberType.isInstanceOf[TraitInfo] || tm.memberType.isInstanceOf[ScalaCaseClassInfo]) )
 
-  def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab:Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
     val showNCFields = {if !modified then nonConstructorFields else nonConstructorFields.sortBy(_.name) }
 
-    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
-    + {if isValueClass then "--Value Class--" else ""}
-    + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
-    + tabs(newTab) + "fields:\n" + fields.map(_.show(newTab+1)).mkString
-    + tabs(newTab) + "non-constructor fields:\n" + showNCFields.map(_.show(newTab+1, supressIndent, modified)).mkString
-    + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
-    + {if( typeMembers.nonEmpty ) tabs(newTab) + "type members:\n" + typeMembers.map(_.show(newTab+1)).mkString else ""}
+    if seenBefore.contains(name) then
+      {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name) (self-ref recursion)\n"
+    else
+      {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
+      + {if isValueClass then "--Value Class--" else ""}
+      + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
+      + tabs(newTab) + "fields:\n" + fields.map(_.show(newTab+1,name :: seenBefore)).mkString
+      + tabs(newTab) + "non-constructor fields:\n" + showNCFields.map(_.show(newTab+1,name :: seenBefore, supressIndent, modified)).mkString
+      + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
+      + {if( typeMembers.nonEmpty ) tabs(newTab) + "type members:\n" + typeMembers.map(_.show(newTab+1,name :: seenBefore)).mkString else ""}
 
 
 //------------------------------------------------------------
@@ -125,13 +125,16 @@ case class JavaClassInfo protected[dotty_reflection] ( name: String, paramMap: T
 
   private lazy val fieldsByName = fields.map(f => (f.name, f.asInstanceOf[JavaFieldInfo])).toMap
 
-  def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab:Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
 
-    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
-    + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
-    + tabs(newTab) + "fields:\n" + fields.map(_.show(newTab+1)).mkString
-    + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
+    if seenBefore.contains(name) then
+      {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name) (self-ref recursion)\n"
+    else
+      {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
+      + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
+      + tabs(newTab) + "fields:\n" + fields.map(_.show(newTab+1,name :: seenBefore)).mkString
+      + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
   
 
 case class JavaClassInfoProxy protected[dotty_reflection] (
@@ -165,5 +168,5 @@ case class JavaClassInfoProxy protected[dotty_reflection] (
 
   val typeMembers: Array[TypeMemberInfo] = Nil.toArray  // unused for Java classes but needed on ClassInfo
 
-  def show(tab:Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab:Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)\n"

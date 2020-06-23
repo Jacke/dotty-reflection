@@ -7,8 +7,8 @@ trait CollectionType:
 
   lazy val elementType: RType
 
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
     + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]): """ else "): "}
-    + elementType.show(newTab,true)
+    + elementType.show(newTab,name :: seenBefore,true)

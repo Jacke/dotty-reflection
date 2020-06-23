@@ -21,8 +21,8 @@ case class UnionInfo protected[dotty_reflection] (
 
   lazy val infoClass: Class[_] = Clazzes.AnyClazz
 
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
     {if(!supressIndent) tabs(tab) else ""} + "Union:\n"
-    + tabs(newTab)+ "left--" + leftType.show(newTab+1,true)
-    + tabs(newTab)+ "right--" + rightType.show(newTab+1,true)
+    + tabs(newTab)+ "left--" + leftType.show(newTab+1,name :: seenBefore,true)
+    + tabs(newTab)+ "right--" + rightType.show(newTab+1,name :: seenBefore,true)

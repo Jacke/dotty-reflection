@@ -21,9 +21,9 @@ case class IntersectionInfo protected[dotty_reflection](
       case e => e
     }
 
-    def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+    def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
       val newTab = {if supressIndent then tab else tab+1}
       {if(!supressIndent) tabs(tab) else ""} + "Intersection:\n"
-      + tabs(newTab)+ "left--" + leftType.show(newTab+1,true)
-      + tabs(newTab)+ "right--" + rightType.show(newTab+1,true)
+      + tabs(newTab)+ "left--" + leftType.show(newTab+1,name :: seenBefore,true)
+      + tabs(newTab)+ "right--" + rightType.show(newTab+1,name :: seenBefore,true)
 

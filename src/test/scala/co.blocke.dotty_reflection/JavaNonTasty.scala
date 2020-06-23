@@ -12,7 +12,8 @@ class JavaNonTasty extends munit.FunSuite:
     |   fields:
     |      (0) age: scala.Int
     |      (1) name: java.lang.String
-    |      (2) other: scala.Int""".stripMargin)
+    |      (2) other: scala.Int
+    |""".stripMargin)
     assert(result.asInstanceOf[JavaClassInfo].hasMixin("co.blocke.dotty_reflection.SJCaptureJava"))
   }
 
@@ -142,7 +143,8 @@ class JavaNonTasty extends munit.FunSuite:
     |         annotations: Map(co.blocke.reflect.Ignore -> Map())
     |      (2) name: java.lang.String
     |         annotations: Map(co.blocke.reflect.FieldAnno -> Map(idx -> 1))
-    |   annotations: Map(co.blocke.reflect.ClassAnno -> Map(name -> Foom))""".stripMargin)
+    |   annotations: Map(co.blocke.reflect.ClassAnno -> Map(name -> Foom))
+    |""".stripMargin)
   }
 
   test("Java collection types") {
@@ -156,7 +158,8 @@ class JavaNonTasty extends munit.FunSuite:
     |      (2) myList: JavaListInfo(java.util.ArrayList[E]): java.lang.String
     |      (3) myQ: JavaQueueInfo(java.util.concurrent.BlockingQueue[E]): java.lang.String
     |      (4) myTree: JavaSetInfo(java.util.TreeSet[E]): java.lang.String
-    |      (5) nested: array of JavaListInfo(java.util.List[E]): java.lang.Integer""".stripMargin)
+    |      (5) nested: array of JavaListInfo(java.util.List[E]): java.lang.Integer
+    |""".stripMargin)
   }
 
   test("Nested Java classes") {
@@ -165,14 +168,16 @@ class JavaNonTasty extends munit.FunSuite:
     |   fields:
     |      (0) sayHey: JavaClassInfo(co.blocke.reflect.Hey):
     |         fields:
-    |            (0) jString: java.lang.String""".stripMargin)
+    |            (0) jString: java.lang.String
+    |""".stripMargin)
   }
 
   test("Java parameterized class top level") {
     val result = Reflector.reflectOn[co.blocke.reflect.JavaParam[Integer]]
     assertEquals( result.show(), """JavaClassInfo(co.blocke.reflect.JavaParam[K]):
     |   fields:
-    |      (0) jThing: java.lang.Integer""".stripMargin)
+    |      (0) jThing: java.lang.Integer
+    |""".stripMargin)
   }
 
   test("Java parameterized class field member") {
@@ -181,5 +186,6 @@ class JavaNonTasty extends munit.FunSuite:
     |   fields:
     |      (0) jFoo: JavaClassInfo(co.blocke.reflect.JavaParam[K]):
     |         fields:
-    |            (0) jThing: java.lang.Integer""".stripMargin)
+    |            (0) jThing: java.lang.Integer
+    |""".stripMargin)
   }

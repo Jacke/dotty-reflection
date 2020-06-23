@@ -11,5 +11,5 @@ package info
 case class UnknownInfo(name: String) extends RType:
   lazy val infoClass: Class[_] = Class.forName(name)
   lazy val orderedTypeParameters = Nil
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)\n"

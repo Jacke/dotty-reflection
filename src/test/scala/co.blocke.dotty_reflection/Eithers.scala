@@ -13,7 +13,8 @@ class Eithers extends munit.FunSuite:
     |   fields:
     |      (0) a: Either:
     |         left--scala.Int
-    |         right--java.lang.String""".stripMargin)
+    |         right--java.lang.String
+    |""".stripMargin)
   }
 
   test("Scala simple Either field assignment") {
@@ -32,7 +33,8 @@ class Eithers extends munit.FunSuite:
     |   fields:
     |      (0) a: Either:
     |         left--scala.Int
-    |         right--Option of java.lang.String""".stripMargin)
+    |         right--Option of java.lang.String
+    |""".stripMargin)
   }
 
   test("Scala Either with Option assignment") {
@@ -53,7 +55,8 @@ class Eithers extends munit.FunSuite:
     |         left--scala.Int
     |         right--Union:
     |            left--java.lang.String
-    |            right--scala.Boolean""".stripMargin)
+    |            right--scala.Boolean
+    |""".stripMargin)
   }
 
   test("Scala Either with Union type assignment") {
@@ -66,7 +69,6 @@ class Eithers extends munit.FunSuite:
     )
   }
 
-  /*
   test("Scala Either having a parameterized type") {
     val result = Reflector.reflectOn[BothSidesParam[Double]]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.BothSidesParam[Z]):
@@ -75,6 +77,6 @@ class Eithers extends munit.FunSuite:
     |         left--scala.Int
     |         right--Option of ScalaCaseClassInfo(co.blocke.dotty_reflection.ParamOption[T]):
     |            fields:
-    |               (0) a: Option of scala.Double""".stripMargin)
+    |               (0) a: Option of scala.Double
+    |""".stripMargin)
   }
-  */

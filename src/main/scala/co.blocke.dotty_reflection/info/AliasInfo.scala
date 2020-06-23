@@ -12,7 +12,7 @@ case class AliasInfo protected[dotty_reflection] (
 
     lazy val orderedTypeParameters = Nil // unused for aliases
 
-    def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+    def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
       val newTab = {if supressIndent then tab else tab+1}
-      {if(!supressIndent) tabs(tab) else ""} + s"alias $name defined as " + unwrappedType.show(newTab,true)
+      {if(!supressIndent) tabs(tab) else ""} + s"alias $name defined as " + unwrappedType.show(newTab,name :: seenBefore,true)
 

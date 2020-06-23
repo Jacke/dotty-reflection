@@ -107,7 +107,6 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
           //----------------------------------------
           case a @ AppliedType(t,tob) => 
             val actualArgRTypes = 
-              val typesymregx = """.*\.\_\$(.+)$""".r
               tob.map{ tpe => tpe.asInstanceOf[reflect.Type].typeSymbol.fullName match {
                 case typesymregx(ts) if paramMap.contains(ts.asInstanceOf[TypeSymbol]) => paramMap(ts.asInstanceOf[TypeSymbol])
                 case _ => Reflector.unwindType(reflect, paramMap)(tpe.asInstanceOf[reflect.Type]) 
@@ -170,7 +169,10 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
           kidsRTypes.toArray)
       else
         //  >> Normal (unsealed) traits
-        TraitInfo(className, typeSymbols, typeSymbols.map(paramMap(_)).toArray) 
+        TraitInfo(
+          className, 
+          typeSymbols, 
+          if paramMap.isEmpty then new Array[RType](0) else typeSymbols.map(paramMap(_)).toArray)
 
     else if symbol.flags.is(reflect.Flags.Enum) then // Found top-level enum (i.e. not part of a class), e.g. member of a collection
       val enumClassSymbol = typeRef.classSymbol.get
@@ -191,6 +193,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
     else if symbol.isClassDef then
       // Get field annotatations (from body of class--they're not on the constructor fields)
       val classDef = symbol.tree.asInstanceOf[ClassDef]
+      val typeSymbols = getTypeParameters(reflect)(symbol)
 
       // Class annotations -> annotation map
       val annoSymbol = symbol.annots.filter( a => !a.symbol.signature.resultSig.startsWith("scala.annotation.internal."))
@@ -248,6 +251,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
         ScalaCaseClassInfo(
           className, 
           orderedTypeParameters, 
+          if paramMap.isEmpty then new Array[RType](0) else typeSymbols.map(paramMap(_)).toArray,
           typeMembers.toArray, 
           caseFields.toArray, 
           classAnnos, 
@@ -267,6 +271,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
           className, 
           fieldDefaultMethods,
           orderedTypeParameters,
+          if paramMap.isEmpty then new Array[RType](0) else typeSymbols.map(paramMap(_)).toArray,
           typeMembers.toArray,
           caseFields.toArray, 
           classAnnos,

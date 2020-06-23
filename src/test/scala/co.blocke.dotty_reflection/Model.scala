@@ -272,3 +272,7 @@ def [T](s: JavaClassInfo).constructWith(args: List[Object]): T =
   val asBuilt = s.infoClass.getConstructors.head.newInstance().asInstanceOf[T]
   s.fields.map(f => f.asInstanceOf[JavaFieldInfo].valueSetter.invoke(asBuilt, args(f.index)))
   asBuilt
+
+// Self-referencing
+case class Shape(id: Int, parent: Option[Shape])
+case class Drawer[T]( id: Int, nextInChain: Option[Drawer[T]], thing: T)

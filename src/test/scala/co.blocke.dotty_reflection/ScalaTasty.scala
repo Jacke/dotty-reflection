@@ -19,7 +19,8 @@ class ScalaTasty extends munit.FunSuite:
     |      (1) age: scala.Int
     |      (2) other: Union:
     |         left--scala.Int
-    |         right--scala.Boolean""".stripMargin)
+    |         right--scala.Boolean
+    |""".stripMargin)
   }
 
   test("create basic Tasty class") {
@@ -33,7 +34,8 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Definitely):
     |   fields:
     |      (0) id: scala.Int
-    |      (1) stuff: scala.Char""".stripMargin)
+    |      (1) stuff: scala.Char
+    |""".stripMargin)
   }
   
   test("process mixins") {
@@ -47,7 +49,8 @@ class ScalaTasty extends munit.FunSuite:
     |   fields:
     |      (0) id: java.lang.String
     |         annotations: Map(co.blocke.reflect.FieldAnno -> Map(idx -> 5))
-    |   annotations: Map(co.blocke.reflect.ClassAnno -> Map(name -> Foom))""".stripMargin)
+    |   annotations: Map(co.blocke.reflect.ClassAnno -> Map(name -> Foom))
+    |""".stripMargin)
   }
 
   // PROBLEM: Too Slow!! 2.x seconds, vs < 0.5 sec before.
@@ -58,7 +61,8 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.WithParam[T,U]):
     |   fields:
     |      (0)[T] one: T
-    |      (1)[U] two: U""".stripMargin)
+    |      (1)[U] two: U
+    |""".stripMargin)
   }
 
   test("handle parameterized class - reflection") {
@@ -66,7 +70,8 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.WithParam[T,U]):
     |   fields:
     |      (0)[T] one: scala.Int
-    |      (1)[U] two: scala.Boolean""".stripMargin)
+    |      (1)[U] two: scala.Boolean
+    |""".stripMargin)
   }
 
   test("handle opaque type alias") {
@@ -74,7 +79,8 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Employee):
     |   fields:
     |      (0) eId: alias EMP_ID defined as scala.Int
-    |      (1) age: scala.Int""".stripMargin)
+    |      (1) age: scala.Int
+    |""".stripMargin)
   }
 
   test("opaque type alias is a union type") {
@@ -83,7 +89,8 @@ class ScalaTasty extends munit.FunSuite:
     |   fields:
     |      (0) id: alias GEN_ID defined as Union:
     |         left--scala.Int
-    |         right--java.lang.String""".stripMargin)
+    |         right--java.lang.String
+    |""".stripMargin)
   }
 
   test("support value classes") {
@@ -93,7 +100,8 @@ class ScalaTasty extends munit.FunSuite:
     |      (0) eId: ScalaCaseClassInfo--Value Class--(co.blocke.dotty_reflection.IdUser):
     |         fields:
     |            (0) id: scala.Int
-    |      (1) age: scala.Int""".stripMargin)
+    |      (1) age: scala.Int
+    |""".stripMargin)
   }
 
   test("detect default values in case class constructor fields") {
@@ -101,7 +109,8 @@ class ScalaTasty extends munit.FunSuite:
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.WithDefault):
     |   fields:
     |      (0) a: scala.Int
-    |      (1) b: java.lang.String""".stripMargin)
+    |      (1) b: java.lang.String
+    |""".stripMargin)
     val wd = result.asInstanceOf[ScalaCaseClassInfo]
     val newWd = wd.constructWith[WithDefault](List(5,wd.fields(1).defaultValue.get))
     assertEquals(newWd, WithDefault(5))
@@ -113,7 +122,8 @@ class ScalaTasty extends munit.FunSuite:
     |   fields:
     |      (0) a: scala.Int
     |      (1) b: java.lang.String
-    |   non-constructor fields:""".stripMargin)
+    |   non-constructor fields:
+    |""".stripMargin)
     // Can't test this... happens at runti
     // interceptMessage[java.lang.Exception]("Class [co.blocke.dotty_reflection.PlainBad]: Non-case class constructor arguments must all be 'val'"){
     //   Reflector.reflectOn[PlainBad]
@@ -133,19 +143,21 @@ class ScalaTasty extends munit.FunSuite:
     |      (6) g: scala.Long
     |      (7) h: scala.Short
     |      (8) i: java.lang.String
-    |      (9) j: scala.Any""".stripMargin)
+    |      (9) j: scala.Any
+    |""".stripMargin)
   }
 
   test("Scala 2.x class") {
     val result = Reflector.reflectOn[scala.math.BigDecimal]
-    assertEquals( result.show(), """Scala2Info(scala.math.BigDecimal)""")
+    assertEquals( result.show(), "Scala2Info(scala.math.BigDecimal)")
   }
 
   test("Try type") {
     val result = Reflector.reflectOn[TryMe]
     assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.TryMe):
     |   fields:
-    |      (0) maybe: Try of scala.Boolean""".stripMargin)
+    |      (0) maybe: Try of scala.Boolean
+    |""".stripMargin)
   }
 
   test("sealed trait with case classes") {
@@ -163,7 +175,8 @@ class ScalaTasty extends munit.FunSuite:
     |                  (1) color: java.lang.String
     |            ScalaCaseClassInfo(co.blocke.dotty_reflection.Plane):
     |               fields:
-    |                  (0) numberOfEngines: scala.Int""".stripMargin)
+    |                  (0) numberOfEngines: scala.Int
+    |""".stripMargin)
   }
 
   test("sealed trait with case objects") {
@@ -174,7 +187,8 @@ class ScalaTasty extends munit.FunSuite:
     |         children:
     |            ObjectInfo(co.blocke.dotty_reflection.Vanilla)
     |            ObjectInfo(co.blocke.dotty_reflection.Chocolate)
-    |            ObjectInfo(co.blocke.dotty_reflection.Bourbon)""".stripMargin)
+    |            ObjectInfo(co.blocke.dotty_reflection.Bourbon)
+    |""".stripMargin)
   }
 
   test("handle intersection types") {
@@ -185,13 +199,14 @@ class ScalaTasty extends munit.FunSuite:
     |         left--Intersection:
     |            left--TraitInfo(co.blocke.dotty_reflection.InterA)
     |            right--TraitInfo(co.blocke.dotty_reflection.InterB)
-    |         right--TraitInfo(co.blocke.dotty_reflection.InterC)""".stripMargin)
+    |         right--TraitInfo(co.blocke.dotty_reflection.InterC)
+    |""".stripMargin)
   }
 
   test("handle Scala non-case classes") {
     val result = Reflector.reflectOn[FoomNC]
     val target = result.show()
-    assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.FoomNC):
+    assertEquals( result.show(0,Nil,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.FoomNC):
     |   fields:
     |      (0) a: scala.Int
     |      (1) b: java.lang.String
@@ -201,13 +216,14 @@ class ScalaTasty extends munit.FunSuite:
     |      (_) blah: scala.Boolean
     |         annotations: Map(co.blocke.reflect.FieldAnno -> Map(idx -> 5))
     |      (_) hey: scala.Int
-    |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
+    |         annotations: Map(co.blocke.reflect.Ignore -> Map())
+    |""".stripMargin)
   }
 
   test("Inheritance and Annotations") {
     val result = Reflector.reflectOn[InheritSimpleChild]
     val target = result.show()
-    assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.InheritSimpleChild):
+    assertEquals( result.show(0,Nil,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.InheritSimpleChild):
     |   fields:
     |      (0) extra: java.lang.String
     |      (1) one: java.lang.String
@@ -228,15 +244,17 @@ class ScalaTasty extends munit.FunSuite:
     |      (_) two: scala.Int
     |         annotations: Map(co.blocke.reflect.Change -> Map(name -> foobar), co.blocke.reflect.DBKey -> Map(index -> 1))
     |      (_) unused: scala.Double
-    |         annotations: Map(co.blocke.reflect.Ignore -> Map())""".stripMargin)
+    |         annotations: Map(co.blocke.reflect.Ignore -> Map())
+    |""".stripMargin)
   }
 
   test("Inheritance and Parameterized Classes") {
     val result = Reflector.reflectOn[ParamChild[Boolean]]
-    assertEquals( result.show(0,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.ParamChild[T]):
+    assertEquals( result.show(0,Nil,false,true), """ScalaClassInfo(co.blocke.dotty_reflection.ParamChild[T]):
     |   fields:
     |      (0)[T] thing: scala.Boolean
     |   non-constructor fields:
     |      (_)[T] cosa: scala.Boolean
-    |      (_)[T] item: scala.Boolean""".stripMargin)
+    |      (_)[T] item: scala.Boolean
+    |""".stripMargin)
   }

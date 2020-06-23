@@ -5,22 +5,28 @@ trait RType extends Serializable:
   val name: String         /** typically the fully-qualified class name */
   lazy val infoClass: Class[_]  /** the JVM class of this type */
   lazy val orderedTypeParameters: List[TypeSymbol]  /** if this is a parameterized type,  list of type symbols in order of declaration */
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String  // modified is "special", ie. don't show index & sort for nonconstructor fields
+  def toTypeStructure: TypeStructure = TypeStructure(name, Nil)
+  def show(
+    tab: Int = 0,
+    seenBefore: List[String] = Nil,
+    supressIndent: Boolean = false,
+    modified: Boolean = false // modified is "special", ie. don't show index & sort for nonconstructor fields
+    ): String  
   override def toString(): String = show()
 
 
 case class TypeMemberInfo(name: String, typeSymbol: TypeSymbol, memberType: RType) extends RType {
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
   lazy val infoClass = Clazzes.ObjectClazz
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
-    {if(!supressIndent) tabs(tab) else ""} + name + s"[$typeSymbol]: "+ memberType.show(tab+1, true)
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
+    {if(!supressIndent) tabs(tab) else ""} + name + s"[$typeSymbol]: "+ memberType.show(tab+1,name :: seenBefore, true)
 }
 
 
 case class Scala2Info(name: String) extends RType {
   lazy val infoClass = Class.forName(name)
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)"
 }
 
@@ -28,7 +34,7 @@ case class Scala2Info(name: String) extends RType {
 case class TypeSymbolInfo(name: String) extends RType:
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
   lazy val infoClass = Clazzes.ObjectClazz
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + name + "\n"
 
 
@@ -37,12 +43,12 @@ case class TypeSymbolInfo(name: String) extends RType:
 case class SelfRefRType(name: String, params: List[RType] = Nil) extends RType:
   lazy val infoClass = Class.forName(name)
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
-  def resolve = info.UnknownInfo(name) // TODO!  Need to reflect w/o having a Class object
-  // def resolve = params match {
-  //   case Nil => Reflector.reflectOnClass(infoClass)
-  //   case p => Reflector.reflectOnClassWithParams(infoClass, p)
-  // }
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = s"SelfRefRType of $name" 
+  def resolve = params match {
+    case Nil => Reflector.reflectOnClass(infoClass)
+    case _ => info.UnknownInfo("foom")
+    // case p => Reflector.reflectOnClassWithParams(infoClass, p)
+  }
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = s"SelfRefRType of $name" 
 
 
 

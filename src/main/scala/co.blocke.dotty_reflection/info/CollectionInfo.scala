@@ -35,7 +35,7 @@ case class MapLikeInfo protected[dotty_reflection](
     case e => e
   }
 
-  override def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  override def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
     + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
@@ -57,9 +57,9 @@ case class ArrayInfo protected[dotty_reflection](
     case e => e
   }
 
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
-    {if(!supressIndent) tabs(tab) else ""} + s"array of " + elementType.show(newTab,true)
+    {if(!supressIndent) tabs(tab) else ""} + s"array of " + elementType.show(newTab,name :: seenBefore,true)
 
 
 /** Java Set dirivative */
@@ -105,9 +105,9 @@ case class JavaArrayInfo protected[dotty_reflection](
     case e => e
   }
 
-  def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
-    {if(!supressIndent) tabs(tab) else ""} + s"array of " + elementType.show(newTab,true)
+    {if(!supressIndent) tabs(tab) else ""} + s"array of " + elementType.show(newTab,name :: seenBefore,true)
 
 
 /** Java Queue dirivative */
@@ -154,9 +154,9 @@ case class JavaMapInfo protected[dotty_reflection](
     case e => e
   }
 
-  override def show(tab: Int = 0, supressIndent: Boolean = false, modified: Boolean = false): String = 
+  override def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
     {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
     + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
-    + elementType.show(newTab)
-    + elementType2.show(newTab)
+    + elementType.show(newTab,name :: seenBefore)
+    + elementType2.show(newTab,name :: seenBefore)

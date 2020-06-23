@@ -15,6 +15,7 @@ trait NonCaseClassInspector:
     name:                  String,
     fieldDefaultMethods:   Map[Int, (String,String)],
     orderedTypeParameters: List[TypeSymbol],
+    actualParameterTypes:  Array[RType],
     typeMembers:           Array[TypeMemberInfo],
     fields:                Array[FieldInfo],
     annotations:           Map[String, Map[String,String]],
@@ -146,6 +147,7 @@ trait NonCaseClassInspector:
     ScalaClassInfo(
       name,
       orderedTypeParameters,
+      actualParameterTypes,
       typeMembers.toArray,
       fields,
       nonConstructorFields.toArray,
