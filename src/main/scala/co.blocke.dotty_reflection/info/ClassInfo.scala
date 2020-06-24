@@ -46,14 +46,16 @@ case class ScalaCaseClassInfo protected[dotty_reflection] (
 
   def show(tab:Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
-
-    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
-    + {if isValueClass then "--Value Class--" else ""}
-    + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
-    + tabs(newTab) + "fields:\n" + {if modified then fields.map(f => tabs(newTab+1) + f.name+s"<${f.fieldType.infoClass.getName}>\n").mkString else fields.map(_.show(newTab+1)).mkString}
-    + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
-    + {if( typeMembers.nonEmpty ) tabs(newTab) + "type members:\n" + typeMembers.map(_.show(newTab+1)).mkString else ""}
-
+    if seenBefore.contains(name) then
+      val params = if actualParameterTypes.nonEmpty then actualParameterTypes.map(_.name).mkString("[",",","]") else ""
+      {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name$params) (self-ref recursion)\n"
+    else
+      {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
+      + {if isValueClass then "--Value Class--" else ""}
+      + s"($name" + {if orderedTypeParameters.nonEmpty then s"""[${orderedTypeParameters.mkString(",")}]):\n""" else "):\n"}
+      + tabs(newTab) + "fields:\n" + {if modified then fields.map(f => tabs(newTab+1) + f.name+s"<${f.fieldType.infoClass.getName}>\n").mkString else fields.map(_.show(newTab+1, name::seenBefore)).mkString}
+      + {if annotations.nonEmpty then tabs(newTab) + "annotations: "+annotations.toString + "\n" else ""}
+      + {if( typeMembers.nonEmpty ) tabs(newTab) + "type members:\n" + typeMembers.map(_.show(newTab+1,name :: seenBefore)).mkString else ""}
 
 //------------------------------------------------------------
 

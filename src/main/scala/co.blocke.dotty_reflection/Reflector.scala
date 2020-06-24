@@ -33,11 +33,25 @@ object Reflector:
 
   //============================== Support Functions ===========================//
 
-  def unwindType(reflect: Reflection, paramMap: TypeSymbolMap)(aType: reflect.Type): RType =
+  def unwindType(reflect: Reflection, _paramMap: TypeSymbolMap)(aType: reflect.Type): RType =
     import reflect.{_, given _}
 
-    val structure = discoverStructure(reflect,paramMap)(aType)
-    println(">> "+structure)
+    val structure = discoverStructure(reflect,_paramMap)(aType)
+    val (paramMap, paramList) = aType match {
+      case AppliedType(t,tob) =>
+        val syms = getTypeParameters(reflect)(t.classSymbol.get)
+        val pl = tob.map( oneTob => unwindType(reflect,_paramMap)(oneTob.asInstanceOf[Type]))
+        (syms.zip( pl ).toMap, pl)
+      case tr: TypeRef =>
+        val syms = getTypeParameters(reflect)(tr.classSymbol.get)
+        val pl = syms.map(s => _paramMap.getOrElse(s, TypeSymbolInfo(s.toString)))
+        (syms.zip( pl ).toMap, pl)
+      case _ => (_paramMap,Nil)
+    }
+    println("----------------- "+structure.className)
+    println("   ParamList: "+ paramList.map(_.name))
+    println("-----------------")
+    // PROBLEM : Ensure when we encounter Option[Drawer[Shape]] that we create nested SelfRefRTypes: for Option/Drawer/Shape
     this.synchronized {
       Option(cache.get(structure)).getOrElse{ 
         // Any is a special case... It may just be an "Any", or something else, like a opaque type alias.
@@ -45,7 +59,7 @@ object Reflector:
         if structure.className == "scala.Any" then
           TastyReflection(reflect, paramMap)(aType).reflectOn
         else
-          cache.put(structure, SelfRefRType(structure.className))
+          cache.put(structure, SelfRefRType(structure.className, paramList.toArray))
           val reflectedRtype = TastyReflection(reflect, paramMap)(aType).reflectOn
           cache.put(structure, reflectedRtype)
           reflectedRtype

@@ -172,7 +172,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
         TraitInfo(
           className, 
           typeSymbols, 
-          if paramMap.isEmpty then new Array[RType](0) else typeSymbols.map(paramMap(_)).toArray)
+          if paramMap.isEmpty then Array.empty[RType] else typeSymbols.map(paramMap(_)).toArray)
 
     else if symbol.flags.is(reflect.Flags.Enum) then // Found top-level enum (i.e. not part of a class), e.g. member of a collection
       val enumClassSymbol = typeRef.classSymbol.get
@@ -251,7 +251,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
         ScalaCaseClassInfo(
           className, 
           orderedTypeParameters, 
-          if paramMap.isEmpty then new Array[RType](0) else typeSymbols.map(paramMap(_)).toArray,
+          if paramMap.isEmpty then Array.empty[RType] else typeSymbols.map(paramMap(_)).toArray,
           typeMembers.toArray, 
           caseFields.toArray, 
           classAnnos, 
@@ -271,7 +271,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
           className, 
           fieldDefaultMethods,
           orderedTypeParameters,
-          if paramMap.isEmpty then new Array[RType](0) else typeSymbols.map(paramMap(_)).toArray,
+          if paramMap.isEmpty then Array.empty[RType] else typeSymbols.map(paramMap(_)).toArray,
           typeMembers.toArray,
           caseFields.toArray, 
           classAnnos,

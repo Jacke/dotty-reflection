@@ -40,14 +40,25 @@ case class TypeSymbolInfo(name: String) extends RType:
 
 // Placeholder to be lazy-resolved, used for self-referencing types
 // When one of this is encountered in the wild, just re-Reflect on the infoClass and you'll get the non-SelfRef (i.e. normal) RType
-case class SelfRefRType(name: String, params: List[RType] = Nil) extends RType:
+case class SelfRefRType(name: String, params: Array[RType] = Array.empty[RType]) extends RType:
+  def blah(p: RType): String = 
+    p match {
+      case s:info.ScalaCaseClassInfo => s.actualParameterTypes.map(_.name).mkString("[",",","]")
+      case t:info.TypeSymbolInfo => 
+      case n => "[]"
+    }
+  val z = params.toList.map(p => (p.name, blah(p)))
+  println(s"(( Created SelfRefRType($name) -> "+z)
   lazy val infoClass = Class.forName(name)
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
-  def resolve = params match {
-    case Nil => Reflector.reflectOnClass(infoClass)
-    case _ => info.UnknownInfo("foom")
+  def resolve = 
+    if params.isEmpty then
+      Reflector.reflectOnClass(infoClass)
+    else
+      // TODO: This is never triggering.... why?  How can I trigger this???
+      println("<><><><> Whoa!")
+      info.UnknownInfo("foom")
     // case p => Reflector.reflectOnClassWithParams(infoClass, p)
-  }
   def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = s"SelfRefRType of $name" 
 
 
