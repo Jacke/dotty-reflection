@@ -122,7 +122,7 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo], paramMap: T
       
     reflect.rootContext match {
       case ctx if ctx.isJavaCompilationUnit() => inspected = JavaClassInspector.inspectJavaClass(clazz, initialParamMap)      
-      case ctx if ctx.isScala2CompilationUnit() => inspected = UnknownInfo(clazz.getName)  // Can't do much with Scala2 classes--not Tasty
+      case ctx if ctx.isScala2CompilationUnit() => inspected = Scala2Info(clazz.getName)  // Can't do much with Scala2 classes--not Tasty
       case _ => 
         val tpe = Type(clazz)
         val masterParamMap = 

@@ -148,7 +148,10 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
     val symbol = typeRef.classSymbol.get
  
     if symbol.flags.is(reflect.Flags.Scala2X) then
-      Scala2Info(symbol.fullName)
+      symbol.fullName match {
+        case PrimitiveType(t) => t
+        case s => Scala2Info(s)
+      }
 
     else if symbol.flags.is(reflect.Flags.Trait) then
       // === Trait ===
@@ -304,8 +307,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
     val valTypeRef = valDef.tpt.tpe.asInstanceOf[reflect.TypeRef]
     val isTypeParam = valTypeRef.typeSymbol.flags.is(reflect.Flags.Param)
     val originalTypeSymbol = if isTypeParam then Some(valTypeRef.name.asInstanceOf[TypeSymbol]) else None
-    val fieldType = originalTypeSymbol.map( ots => 
-      paramMap.getOrElse(ots, TypeSymbolInfo(ots.toString))
+    val fieldType = originalTypeSymbol.map( ots => paramMap.getOrElse(ots, TypeSymbolInfo(ots.toString))
     ).getOrElse( Reflector.unwindType(reflect, paramMap)(valDef.tpt.tpe) )
 
     ScalaFieldInfo(index, valDef.name, fieldType, fieldAnnos, fieldDefaultMethods.get(index), originalTypeSymbol)

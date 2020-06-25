@@ -175,10 +175,7 @@ class Parameters extends munit.FunSuite:
     |      (0) a: ScalaCaseClassInfo(co.blocke.dotty_reflection.DuoTypes[Q,U]):
     |         fields:
     |            (0)[Q] a: scala.Int
-    |            (1)[U] b: ScalaCaseClassInfo(co.blocke.dotty_reflection.DuoTypes[Q,U]):
-    |               fields:
-    |                  (0)[Q] a: scala.Byte
-    |                  (1)[U] b: scala.Short
+    |            (1)[U] b: ScalaCaseClassInfo(co.blocke.dotty_reflection.DuoTypes[scala.Byte,scala.Short]) (self-ref recursion)
     |""".stripMargin)
   }
 

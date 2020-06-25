@@ -5,7 +5,6 @@ trait RType extends Serializable:
   val name: String         /** typically the fully-qualified class name */
   lazy val infoClass: Class[_]  /** the JVM class of this type */
   lazy val orderedTypeParameters: List[TypeSymbol]  /** if this is a parameterized type,  list of type symbols in order of declaration */
-  def toTypeStructure: TypeStructure = TypeStructure(name, Nil)
   def show(
     tab: Int = 0,
     seenBefore: List[String] = Nil,
@@ -27,7 +26,7 @@ case class Scala2Info(name: String) extends RType {
   lazy val infoClass = Class.forName(name)
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
   def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
-    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)"
+    {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName + s"($name)\n"
 }
 
 

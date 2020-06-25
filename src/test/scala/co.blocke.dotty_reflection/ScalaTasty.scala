@@ -149,7 +149,7 @@ class ScalaTasty extends munit.FunSuite:
 
   test("Scala 2.x class") {
     val result = Reflector.reflectOn[scala.math.BigDecimal]
-    assertEquals( result.show(), "Scala2Info(scala.math.BigDecimal)")
+    assertEquals( result.show(), "Scala2Info(scala.math.BigDecimal)\n")
   }
 
   test("Try type") {

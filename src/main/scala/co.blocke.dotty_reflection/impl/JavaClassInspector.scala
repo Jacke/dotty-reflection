@@ -23,12 +23,16 @@ object JavaClassInspector:
       case z if z <:< JQueueClazz   => JavaQueueExtractor().emptyInfo(z, paramMap)
       case z if z <:< JSetClazz     => JavaSetExtractor().emptyInfo(z, paramMap)
       case _ =>
-        val annos:List[Annotation] = c.getAnnotations.toList
-        val allAnnos = annos.map(a => parseAnno(a)).toMap
-        if returnProxy then
-          JavaClassInfoProxy(c.getName,  inspectJavaFields(c, paramMap).toArray, typeParamSymbols(c), allAnnos)
-        else
-          JavaClassInfo(c.getName, paramMap)
+        // Primitive type?
+        PrimitiveType.unapply(c.getName).getOrElse{
+          // Nope--not primitive... dive in!
+          val annos:List[Annotation] = c.getAnnotations.toList
+          val allAnnos = annos.map(a => parseAnno(a)).toMap
+          if returnProxy then
+            JavaClassInfoProxy(c.getName,  inspectJavaFields(c, paramMap).toArray, typeParamSymbols(c), allAnnos)
+          else
+            JavaClassInfo(c.getName, paramMap)
+        }
     }
 
   private def parseAnno( annoClass: Annotation): (String,Map[String,String]) = 

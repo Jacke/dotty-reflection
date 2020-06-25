@@ -30,3 +30,45 @@ enum PrimitiveType(val name: String, val _infoClass: Class[_]) extends RType:
 
   def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     {if(!supressIndent) tabs(tab) else ""} + this.name + "\n"
+
+
+import PrimitiveType._
+object PrimitiveType:
+  def unapply(symName: String): Option[RType] = symName match {
+    case "boolean"              => Some(Scala_Boolean)
+    case "Boolean"              => Some(Scala_Boolean)
+    case "scala.Boolean"        => Some(Scala_Boolean)
+    case "java.lang.Boolean"    => Some(Java_Boolean)
+    case "byte"                 => Some(Scala_Byte)
+    case "Byte"                 => Some(Scala_Byte)
+    case "scala.Byte"           => Some(Scala_Byte)
+    case "java.lang.Byte"       => Some(Java_Byte)
+    case "char"                 => Some(Scala_Char)
+    case "Char"                 => Some(Scala_Char)
+    case "scala.Char"           => Some(Scala_Char)
+    case "java.lang.Character"  => Some(Java_Char)
+    case "double"               => Some(Scala_Double)
+    case "Double"               => Some(Scala_Double)
+    case "scala.Double"         => Some(Scala_Double)
+    case "java.lang.Double"     => Some(Java_Double)
+    case "float"                => Some(Scala_Float)
+    case "Float"                => Some(Scala_Float)
+    case "scala.Float"          => Some(Scala_Float)
+    case "java.lang.Float"      => Some(Java_Float)
+    case "int"                  => Some(Scala_Int)
+    case "Int"                  => Some(Scala_Int)
+    case "scala.Int"            => Some(Scala_Int)
+    case "java.lang.Integer"    => Some(Java_Int)
+    case "long"                 => Some(Scala_Long)
+    case "Long"                 => Some(Scala_Long)
+    case "scala.Long"           => Some(Scala_Long)
+    case "java.lang.Long"       => Some(Java_Long)
+    case "short"                => Some(Scala_Short)
+    case "Short"                => Some(Scala_Short)
+    case "scala.Short"          => Some(Scala_Short)
+    case "java.lang.Short"      => Some(Java_Short)
+    case "java.lang.String"     => Some(Scala_String)
+    case "java.lang.Object"     => Some(Java_Object)
+    case "java.lang.Number"     => Some(Java_Number)
+    case _ => None
+  }
