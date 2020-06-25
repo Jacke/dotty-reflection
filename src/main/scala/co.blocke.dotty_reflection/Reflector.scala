@@ -33,25 +33,33 @@ object Reflector:
 
   //============================== Support Functions ===========================//
 
+  var gz = 0
   def unwindType(reflect: Reflection, _paramMap: TypeSymbolMap)(aType: reflect.Type): RType =
     import reflect.{_, given _}
 
-    val structure = discoverStructure(reflect,_paramMap)(aType)
-    val (paramMap, paramList) = aType match {
-      case AppliedType(t,tob) =>
+    println(tabs(gz)+"Class "+aType.classSymbol.get+" with "+_paramMap.map{(k,v)=>(k,v.name)})
+    // If this is the initial entry, may need to "seed" paramMap if this is an AppliedType (parameterized)
+    val (paramList, paramMap) = aType match {
+      case AppliedType(t,tob) if _paramMap.isEmpty =>
         val syms = getTypeParameters(reflect)(t.classSymbol.get)
-        val pl = tob.map( oneTob => unwindType(reflect,_paramMap)(oneTob.asInstanceOf[Type]))
-        (syms.zip( pl ).toMap, pl)
-      case tr: TypeRef =>
-        val syms = getTypeParameters(reflect)(tr.classSymbol.get)
-        val pl = syms.map(s => _paramMap.getOrElse(s, TypeSymbolInfo(s.toString)))
-        (syms.zip( pl ).toMap, pl)
-      case _ => (_paramMap,Nil)
+        gz += 1
+        val pl: List[RType] = tob.map( oneTob => unwindType(reflect, _paramMap)(oneTob.asInstanceOf[Type]))
+        gz -= 1
+        // sew in _paramMap here if non-empty!
+        (pl, syms.zip(pl).toMap)
+      case _ => (Nil,Map.empty[TypeSymbol,RType])
     }
-    println("----------------- "+structure.className)
-    println("   ParamList: "+ paramList.map(_.name))
-    println("-----------------")
-    // PROBLEM : Ensure when we encounter Option[Drawer[Shape]] that we create nested SelfRefRTypes: for Option/Drawer/Shape
+    println(tabs(gz)+"   Map: "+paramMap.map{(k,v)=>(k,v.name)})
+
+    // PROBLEM:  Drawer is somehow getting recreated with Any as the parameter--loses its earlier (correct)
+    // parameter of Shape.  This seems to have something to do with populationg Option[Drawer[Shape]] 
+    // (becomes Option[Drawer[Any]])
+    //
+    // Solution: For embedded AppliedTypes, we need to "sew" the type symbols from _paramMap into the discovered
+    // (embedded) map.  For example Option[Drawer[T]] _paramMap defines T as Shape.  We need to sew A in Option into T so it resolves!
+
+    val structure = discoverStructure(reflect,paramMap)(aType)
+    println(tabs(gz)+"   >> S: "+structure)
     this.synchronized {
       Option(cache.get(structure)).getOrElse{ 
         // Any is a special case... It may just be an "Any", or something else, like a opaque type alias.
@@ -122,6 +130,28 @@ object Reflector:
           found
         }
       }
+
+
+  /** Same as reflectOn, except given a Class object instead of a type, T.
+   *  NOTE: If Class is parameterized, this call can't infer the types of the parameters.  In that case, call reflectOnClassWithParams
+   *  NOTE: This is *NOT* a macro!
+   */
+  def reflectOnClassWithParams(clazz: Class[_], params: Array[RType]): RType =
+    val className = clazz.getName
+    val typeSyms = clazz.getTypeParameters.map(_.getName.asInstanceOf[TypeSymbol]).toList
+    val paramMap = typeSyms.zip(params).toMap
+    val structure = TypeStructure(className,Nil)
+    this.synchronized {
+      Option(cache.get(structure)).getOrElse{
+        cache.put(structure, SelfRefRType(className, params))
+        val tc = new TastyInspection(clazz, None, paramMap)
+        tc.inspect("", List(className))
+        val found = tc.inspected
+        cache.put(structure, found)
+        found
+      }
+    }
+
 
 
   // pre-loaded with known language primitive types

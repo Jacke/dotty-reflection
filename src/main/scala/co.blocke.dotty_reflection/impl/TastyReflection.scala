@@ -115,7 +115,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
             // Sigh--Array is "different".  Getting type params crashes, likely because its a wrap of a Java Array?
             val typeMap = t match {
               case _ if classSymbol.fullName == Clazzes.ScalaArrayClazz.getName => Map("A".asInstanceOf[TypeSymbol] -> actualArgRTypes(0))
-              case _ => getTypeParameters(reflect)(t.classSymbol.get).zip(actualArgRTypes).toMap
+              case _ => getTypeParameters(reflect)(classSymbol).zip(actualArgRTypes).toMap
             }
 
             val foundType: Option[RType] = ExtractorRegistry.extractors.collectFirst {

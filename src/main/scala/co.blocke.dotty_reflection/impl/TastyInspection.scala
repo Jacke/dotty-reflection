@@ -10,12 +10,15 @@ import scala.tasty.inspector.TastyInspector
 import dotty.tools.dotc.ast.Trees.AppliedTypeTree
   
 
-class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo]) 
+class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo], paramMap: TypeSymbolMap = Map.empty[TypeSymbol,RType]) 
     extends TastyInspector:
   import Clazzes._
 
   var inspected: RType = UnknownInfo(clazz.getName)
-  val inTermsOfParamMap = inTermsOf.map(ito => ito.orderedTypeParameters.zip(ito.actualParameterTypes).toMap).getOrElse(Map.empty[TypeSymbol, RType])
+  val initialParamMap = inTermsOf match {
+    case Some(ito) => ito.orderedTypeParameters.zip(ito.actualParameterTypes).toMap
+    case None => paramMap
+  }
 
   protected def processCompilationUnit(reflect: Reflection)(root: reflect.Tree): Unit = 
     import reflect.{_, given _}
@@ -97,7 +100,6 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
         lookForSyms: List[PathSymbol], 
         inClass: Symbol, 
         typedTrait: TraitInfo, 
-        // xsymMap: Map[PathSymbol,PathSymbol] = Map.empty[PathSymbol,PathSymbol],
         level: Int = 0
       ): Option[TypeSymbolMap] =
       
@@ -119,11 +121,11 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
 
       
     reflect.rootContext match {
-      case ctx if ctx.isJavaCompilationUnit() => inspected = JavaClassInspector.inspectJavaClass(clazz, inTermsOfParamMap)      
+      case ctx if ctx.isJavaCompilationUnit() => inspected = JavaClassInspector.inspectJavaClass(clazz, initialParamMap)      
       case ctx if ctx.isScala2CompilationUnit() => inspected = UnknownInfo(clazz.getName)  // Can't do much with Scala2 classes--not Tasty
       case _ => 
         val tpe = Type(clazz)
-        val initialParamMap = 
+        val masterParamMap = 
           // If this is in terms of (some trait), map the class' unknown type symbol to the trait's known/typed param symbols.
           // For example:  
           //   trait Findable[F]
@@ -135,8 +137,8 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo])
             findTypeSymValues( getTypeParameters(reflect)(classSymbol).map(ts => (classSymbol.fullName,ts)), classSymbol, inTermsOf.get )
               .getOrElse(throw new ReflectException(s"${inTermsOf.get.name} is not a parent of ${clazz.getName}"))
           else 
-            inTermsOfParamMap
+            initialParamMap
 
-        val tastyReflection: TastyReflection = TastyReflection(reflect,initialParamMap)( tpe )
+        val tastyReflection: TastyReflection = TastyReflection(reflect,masterParamMap)( tpe )
         inspected = tastyReflection.reflectOn
     }

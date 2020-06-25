@@ -258,3 +258,25 @@ class ScalaTasty extends munit.FunSuite:
     |      (_)[T] item: scala.Boolean
     |""".stripMargin)
   }
+
+  test("Self-referencing types (non-parameterized") {
+    val result = Reflector.reflectOn[Shape]
+    assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Shape):
+    |   fields:
+    |      (0) id: scala.Int
+    |      (1) parent: Option of ScalaCaseClassInfo(co.blocke.dotty_reflection.Shape) (self-ref recursion)
+    |""".stripMargin)
+  }
+
+  test("Self-referencing types (parameterized") {
+    val result = Reflector.reflectOn[Drawer[Shape]]
+    assertEquals( result.show(), """ScalaCaseClassInfo(co.blocke.dotty_reflection.Drawer[T]):
+    |   fields:
+    |      (0) id: scala.Int
+    |      (1) nextInChain: Option of ScalaCaseClassInfo(co.blocke.dotty_reflection.Drawer[co.blocke.dotty_reflection.Shape]) (self-ref recursion)
+    |      (2)[T] thing: ScalaCaseClassInfo(co.blocke.dotty_reflection.Shape):
+    |         fields:
+    |            (0) id: scala.Int
+    |            (1) parent: Option of ScalaCaseClassInfo(co.blocke.dotty_reflection.Shape) (self-ref recursion)
+    |""".stripMargin)
+  }
