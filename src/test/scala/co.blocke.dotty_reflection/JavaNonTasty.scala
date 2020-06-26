@@ -23,9 +23,9 @@ class JavaNonTasty extends munit.FunSuite:
     assertEquals(person.getName,"Frank")
     assertEquals(person.getAge,35)
     assertEquals(person.getOther,5)
-    assertEquals(p.fields(1).valueAccessor.invoke(person).toString,"Frank")
-    assertEquals(p.fields(0).valueAccessor.invoke(person).asInstanceOf[Int],35)
-    assertEquals(p.fields(2).valueAccessor.invoke(person).asInstanceOf[Int],5)
+    assertEquals(p.fields(1).valueOf(person).toString,"Frank")
+    assertEquals(p.fields(0).valueOf(person).asInstanceOf[Int],35)
+    assertEquals(p.fields(2).valueOf(person).asInstanceOf[Int],5)
   }
 
   test("Verify Java primitives") {
@@ -36,80 +36,80 @@ class JavaNonTasty extends munit.FunSuite:
     ))
 
     val _a = jx.field("jBoolean").get
-    _a.valueSetter.invoke(inst, java.lang.Boolean.valueOf(false))
-    val a = _a.valueAccessor.invoke(inst)
+    _a.setValue(inst, java.lang.Boolean.valueOf(false))
+    val a = _a.valueOf(inst)
 
     val _b = jx.field("jBoolean2").get 
-    _b.valueSetter.invoke(inst, java.lang.Boolean.valueOf(true))
-    val b = _b.valueAccessor.invoke(inst)
+    _b.setValue(inst, java.lang.Boolean.valueOf(true))
+    val b = _b.valueOf(inst)
 
     val _c = jx.field("jByte").get 
-    _c.valueSetter.invoke(inst, java.lang.Byte.valueOf(3.toByte))
-    val c = _c.valueAccessor.invoke(inst)
+    _c.setValue(inst, java.lang.Byte.valueOf(3.toByte))
+    val c = _c.valueOf(inst)
 
     val _d = jx.field("jByte2").get 
-    _d.valueSetter.invoke(inst, java.lang.Byte.valueOf(5.toByte))
-    val d = _d.valueAccessor.invoke(inst)
+    _d.setValue(inst, java.lang.Byte.valueOf(5.toByte))
+    val d = _d.valueOf(inst)
 
     val _e = jx.field("jChar").get 
-    _e.valueSetter.invoke(inst, java.lang.Character.valueOf('y'))
-    val e = _e.valueAccessor.invoke(inst)
+    _e.setValue(inst, java.lang.Character.valueOf('y'))
+    val e = _e.valueOf(inst)
 
     val _f = jx.field("jCharacter").get 
-    _f.valueSetter.invoke(inst, java.lang.Character.valueOf('z'))
-    val f = _f.valueAccessor.invoke(inst)
+    _f.setValue(inst, java.lang.Character.valueOf('z'))
+    val f = _f.valueOf(inst)
 
     val _g = jx.field("jDouble").get 
-    _g.valueSetter.invoke(inst, java.lang.Double.valueOf(2.3D))
-    val g = _g.valueAccessor.invoke(inst)
+    _g.setValue(inst, java.lang.Double.valueOf(2.3D))
+    val g = _g.valueOf(inst)
 
     val _h = jx.field("jDouble2").get 
-    _h.valueSetter.invoke(inst, java.lang.Double.valueOf(1.2D))
-    val h = _h.valueAccessor.invoke(inst)
+    _h.setValue(inst, java.lang.Double.valueOf(1.2D))
+    val h = _h.valueOf(inst)
 
     val _i = jx.field("jFloat").get 
-    _i.valueSetter.invoke(inst, java.lang.Float.valueOf(5.6F))
-    val i = _i.valueAccessor.invoke(inst)
+    _i.setValue(inst, java.lang.Float.valueOf(5.6F))
+    val i = _i.valueOf(inst)
 
     val _j = jx.field("jFloat2").get 
-    _j.valueSetter.invoke(inst, java.lang.Float.valueOf(4.5F))
-    val j = _j.valueAccessor.invoke(inst)
+    _j.setValue(inst, java.lang.Float.valueOf(4.5F))
+    val j = _j.valueOf(inst)
 
     val _k = jx.field("jInt").get 
-    _k.valueSetter.invoke(inst, java.lang.Integer.valueOf(2))
-    val k = _k.valueAccessor.invoke(inst)
+    _k.setValue(inst, java.lang.Integer.valueOf(2))
+    val k = _k.valueOf(inst)
 
     val _l = jx.field("jInteger").get 
-    _l.valueSetter.invoke(inst, java.lang.Integer.valueOf(1))
-    val l = _l.valueAccessor.invoke(inst)
+    _l.setValue(inst, java.lang.Integer.valueOf(1))
+    val l = _l.valueOf(inst)
 
     val _m = jx.field("jLong").get 
-    _m.valueSetter.invoke(inst, java.lang.Long.valueOf(4L))
-    val m = _m.valueAccessor.invoke(inst)
+    _m.setValue(inst, java.lang.Long.valueOf(4L))
+    val m = _m.valueOf(inst)
 
     val _n = jx.field("jLong2").get 
-    _n.valueSetter.invoke(inst, java.lang.Long.valueOf(3L))
-    val n = _n.valueAccessor.invoke(inst)
+    _n.setValue(inst, java.lang.Long.valueOf(3L))
+    val n = _n.valueOf(inst)
 
     val _o = jx.field("jShort").get 
-    _o.valueSetter.invoke(inst, java.lang.Short.valueOf(6.toShort))
-    val o = _o.valueAccessor.invoke(inst)
+    _o.setValue(inst, java.lang.Short.valueOf(6.toShort))
+    val o = _o.valueOf(inst)
 
     val _p = jx.field("jShort2").get 
-    _p.valueSetter.invoke(inst, java.lang.Short.valueOf(5.toShort))
-    val p = _p.valueAccessor.invoke(inst)
+    _p.setValue(inst, java.lang.Short.valueOf(5.toShort))
+    val p = _p.valueOf(inst)
 
     val _q = jx.field("jString").get 
-    _q.valueSetter.invoke(inst, "blather")
-    val q = _q.valueAccessor.invoke(inst)
+    _q.setValue(inst, "blather")
+    val q = _q.valueOf(inst)
 
     val _r = jx.field("jObj").get 
-    _r.valueSetter.invoke(inst, "empty")
-    val r = _r.valueAccessor.invoke(inst)
+    _r.setValue(inst, "empty")
+    val r = _r.valueOf(inst)
 
     val _s = jx.field("jNumber").get 
-    _s.valueSetter.invoke(inst, java.lang.Integer.valueOf(456).asInstanceOf[java.lang.Number])
-    val s = _s.valueAccessor.invoke(inst)
+    _s.setValue(inst, java.lang.Integer.valueOf(456).asInstanceOf[java.lang.Number])
+    val s = _s.valueOf(inst)
 
     assert( a.asInstanceOf[java.lang.Boolean].booleanValue == false && a.getClass.getName == "java.lang.Boolean" )
     assert( b.asInstanceOf[java.lang.Boolean].booleanValue == true && b.getClass.getName == "java.lang.Boolean" )
