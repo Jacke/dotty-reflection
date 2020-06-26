@@ -91,7 +91,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
                   )
               case cs if is2xEnumeration => 
                 val enumerationClassSymbol = typeRef.qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass
-                ScalaEnumerationInfo(typeRef.name, enumerationClassSymbol.fields.map( _.name ))  // get the values of the Enumeration
+                ScalaEnumerationInfo(enumerationClassSymbol.fullName.dropRight(1), enumerationClassSymbol.fields.map( _.name ))  // get the values of the Enumeration
               case cs => 
                 reflectOnClass(reflect, paramMap)(typeRef)
             }
@@ -181,7 +181,7 @@ case class TastyReflection(reflect: Reflection, paramMap: TypeSymbolMap)(aType: 
       val enumClassSymbol = typeRef.classSymbol.get
       enumClassSymbol.companionClass.methods // <-- This shouldn't "do" anything!  For some reason it is needed or Enums test explodes.
       val enumValues = enumClassSymbol.children.map(_.name)
-      ScalaEnumInfo(symbol.name, enumValues)
+      ScalaEnumInfo(symbol.fullName, enumValues)
 
     // === Java Class ===
     // User-written Java classes will have the source file.  Java library files will have <no file> for source
