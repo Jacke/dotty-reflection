@@ -94,7 +94,7 @@ object WeekDay extends Enumeration {
   type WeekDay = Value
   val Monday = Value(1)
   val Tuesday = Value(2)
-  val Wednesday = Value(3)
+  val Wednesday = Value(99)
   val Thursday = Value(4)
   val Friday = Value(5)
   val Saturday = Value(6)

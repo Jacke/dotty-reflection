@@ -28,7 +28,9 @@ object Reflector:
   def reflectOnImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[RType] = 
     import qctx.tasty.{_, given _}
 
-    Expr( unwindType(qctx.tasty, Map.empty[TypeSymbol, RType])(typeOf[T]) )
+    val rtype = unwindType(qctx.tasty, Map.empty[TypeSymbol, RType])(typeOf[T])
+    Expr( rtype )
+
 
 
   //============================== Support Functions ===========================//

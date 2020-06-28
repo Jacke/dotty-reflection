@@ -115,6 +115,7 @@ class TastyInspection(clazz: Class[_], inTermsOf: Option[TraitInfo], paramMap: T
         inClass.tree.asInstanceOf[ClassDef].parents.findMap( parent => { // return Option[TypeSymbolMap]
           parent match {
             case att: dotty.tools.dotc.ast.Trees.AppliedTypeTree[_] => unpackAppliedType( att.tpe.asInstanceOf[AppliedType], lookForSyms, typedTrait )
+            case someTree: Tree if someTree.symbol.fullName == typedTrait.name => Some( lookForSyms.map(f => f._2 -> TypeSymbolInfo(f._2.asInstanceOf[String])).toMap )
             case _ => None
           }
         })

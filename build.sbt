@@ -1,4 +1,4 @@
-val dottyVersion =  "0.25.0-RC1"
+val dottyVersion =  "0.25.0-RC2"
 
 val pubSettings = Seq(
   publishMavenStyle := true,
@@ -27,7 +27,7 @@ lazy val root = project
 
     Test / parallelExecution := false,
 
-    // scalacOptions ++= Seq("-language:implicitConversions","-Xprint:typer"),
+    scalacOptions ++= Seq("-language:implicitConversions","-Xprint:typer"),
     scalacOptions ++= Seq("-language:implicitConversions"),
 
     testFrameworks += new TestFramework("munit.Framework"),

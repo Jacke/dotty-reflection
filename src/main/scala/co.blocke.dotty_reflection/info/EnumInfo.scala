@@ -20,22 +20,15 @@ case class ScalaEnumInfo protected[dotty_reflection](
 ) extends EnumInfo: 
   lazy val orderedTypeParameters = Nil
 
-  lazy val infoClass: Class[_] = Class.forName(name+"$")
+  lazy val infoClass: Class[_] = Class.forName(name)
 
-  private lazy val companionConst = {
-    val const = infoClass.getDeclaredConstructor()
-    const.setAccessible(true)
-    const
-  }
-  private lazy val companionInstance = companionConst.newInstance()
-  private lazy val ordinalMethod = infoClass.getMethod("ordinal", classOf[Object])
+  private lazy val ordinalMethod = infoClass.getMethod("ordinal")
+  private lazy val valuesMethod  = infoClass.getMethod("values")
   private lazy val valueOfMethod = infoClass.getMethod("valueOf", classOf[String])
 
-  def ordinal(s: String): Int = 
-    val target = valueOfMethod.invoke(companionInstance, s)
-    ordinalMethod.invoke(companionInstance, target).asInstanceOf[Int]
-  def valueOf(s: String): Any = valueOfMethod.invoke(companionInstance,s)
-  def valueOf(i: Int): Any = values(i)
+  def ordinal(s: String): Int = ordinalMethod.invoke(valueOfMethod.invoke(null, s)).asInstanceOf[Int]
+  def valueOf(s: String): Any = valueOfMethod.invoke(null,s)
+  def valueOf(i: Int): Any = valuesMethod.invoke(null).asInstanceOf[Array[Object]].find(e => ordinalMethod.invoke(e).asInstanceOf[Int] == i).get
 
 
 case class ScalaEnumerationInfo protected[dotty_reflection](
@@ -44,20 +37,14 @@ case class ScalaEnumerationInfo protected[dotty_reflection](
 ) extends EnumInfo:
   lazy val orderedTypeParameters = Nil
 
-  lazy val infoClass: Class[_] = Class.forName(name+"$")
+  lazy val infoClass: Class[_] = Class.forName(name)
 
-  private lazy val companionConst = {
-    val const = infoClass.getDeclaredConstructor()
-    const.setAccessible(true)
-    const
-  }
-  private lazy val companionInstance = companionConst.newInstance()
   private lazy val withNameMethod = infoClass.getMethod("withName", classOf[String])
   private lazy val applyMethod = infoClass.getMethod("apply", classOf[Int])
 
   def ordinal(s: String): Int = valueOf(s).asInstanceOf[Enumeration#Value].id
-  def valueOf(s: String): Any = withNameMethod.invoke(companionInstance,s)
-  def valueOf(i: Int): Any = applyMethod.invoke(companionInstance,i.asInstanceOf[Object])
+  def valueOf(s: String): Any = withNameMethod.invoke(null,s)
+  def valueOf(i: Int): Any = applyMethod.invoke(null,i.asInstanceOf[Object])
 
 
 case class JavaEnumInfo protected[dotty_reflection](
