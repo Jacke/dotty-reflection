@@ -30,7 +30,8 @@ case class ScalaFieldInfo(
   fieldType:                RType,
   annotations:              Map[String,Map[String,String]],
   defaultValueAccessorName: Option[(String,String)], // (class, method)  //Option[()=>Object],
-  originalSymbol:           Option[TypeSymbol]
+  originalSymbol:           Option[TypeSymbol],
+  isNonConstructorField:    Boolean = false
 ) extends FieldInfo:
 
   def valueOf[T](target: T) = target.getClass.getMethod(name).invoke(target)
@@ -63,7 +64,7 @@ case class JavaFieldInfo(
   name:            String,
   fieldType:       RType,
   annotations:     Map[String,Map[String,String]],
-  valueAccessor:  Method,
+  valueAccessor:   Method,
   valueSetter:     Method,
   originalSymbol:  Option[TypeSymbol]
 ) extends FieldInfo:

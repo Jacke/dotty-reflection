@@ -1,0 +1,23 @@
+package co.blocke.dotty_reflection
+
+// import impl._ 
+import info._
+
+trait SJCapture {
+  var captured: java.util.HashMap[String,String] = new java.util.HashMap[String, String]()
+}
+
+class Cap() extends SJCapture {
+  var name: String = ""
+}
+
+object RunMe extends App:
+
+  val r = Reflector.reflectOn[Cap]
+  println(r)
+
+
+  println("done.")
+
+  def methods(clazz: Class[_]): String = 
+    s"=== Methods: ${clazz.getName} ===\n   " + clazz.getMethods.toList.mkString("\n   ")

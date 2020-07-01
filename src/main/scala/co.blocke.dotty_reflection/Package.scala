@@ -46,6 +46,25 @@ def getTypeParameters(reflect: scala.tasty.Reflection)(symbol: reflect.Symbol): 
       }
     }
 
+      
+def mangleArrayClassName(tpe: RType): String =
+  val mangled = tpe match {
+    case _: TypeSymbolInfo => "Ljava.lang.Object;"
+    case c: info.ArrayInfo => mangleArrayClassName(c.elementType)
+    case c: info.JavaArrayInfo => mangleArrayClassName(c.elementType)
+    case PrimitiveType.Scala_Boolean => "Z"
+    case PrimitiveType.Scala_Byte => "B"
+    case PrimitiveType.Scala_Char => "C"
+    case PrimitiveType.Scala_Double => "D"
+    case PrimitiveType.Scala_Float => "F"
+    case PrimitiveType.Scala_Int => "I"
+    case PrimitiveType.Scala_Long => "J"
+    case PrimitiveType.Scala_Short => "S"
+    case PrimitiveType.Scala_Any => "Ljava.lang.Object;"
+    case c => "L" + c.name + ";"
+  }
+  "[" + mangled
+
 
 extension ListOps on [A,B](xs: List[A]) {
   def findMap( p: (A) => Option[B] ): Option[B] = 

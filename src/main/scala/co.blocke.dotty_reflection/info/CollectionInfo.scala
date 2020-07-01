@@ -96,7 +96,8 @@ case class JavaArrayInfo protected[dotty_reflection](
   _elementType: RType
 ) extends RType:
 
-  val name: String = JAVA_ARRAY_CLASS
+  val name: String = mangleArrayClassName(_elementType)
+    //this.getClass.getName // Bogus value that will materialize an InfoClass but won't pass non-array comparison tests
   lazy val infoClass: Class[_] = Class.forName(name)
   lazy val orderedTypeParameters: List[TypeSymbol] = Nil
 

@@ -2,6 +2,7 @@ package co.blocke.dotty_reflection
 
 import quoted._
 import java.io._
+import java.util._
 import Liftable._
 
 given Liftable[TypeSymbol] {
@@ -23,20 +24,20 @@ given Liftable[SelfRefRType] {
     '{ new SelfRefRType(${Expr(x.name)}, ${ Expr( x.params ) } ) }
 }
 
-
 // In order to cross the compiler->runtime bridge, we need to serialize some objects, e.g. traits.
 // Then on the runtime side we deserialize them back into objects again.
-inline def serialize(o: Object): Array[Byte] = 
+inline def serialize(o: Object): String = 
   val baos = new ByteArrayOutputStream()
   val oos  = new ObjectOutputStream(baos)
   oos.writeObject(o)
-  val ret = baos.toByteArray
+  val bytes = Base64.getEncoder.encodeToString(baos.toByteArray)
   baos.close
   oos.close
-  ret
+  bytes
 
-inline def deserialize(b: Array[Byte]): Object = 
-  val bais = new ByteArrayInputStream(b)
+inline def deserialize(b: String): Object = 
+  val bytes = Base64.getDecoder.decode(b)
+  val bais = new ByteArrayInputStream(bytes)
   val ois  = new ObjectInputStream(bais)
   val ret = ois.readObject()
   bais.close

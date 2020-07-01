@@ -23,11 +23,13 @@ lazy val root = project
 
     doc := null,  // disable dottydoc for now
 
+    sources in (Compile, doc) := Seq(),
+
     scalaVersion := dottyVersion,
 
     Test / parallelExecution := false,
 
-    scalacOptions ++= Seq("-language:implicitConversions","-Xprint:typer"),
+    // scalacOptions ++= Seq("-language:implicitConversions","-Xprint:typer"),
     scalacOptions ++= Seq("-language:implicitConversions"),
 
     testFrameworks += new TestFramework("munit.Framework"),

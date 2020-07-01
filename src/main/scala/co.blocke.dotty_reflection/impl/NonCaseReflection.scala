@@ -3,6 +3,7 @@ package impl
 
 import info._
 import scala.tasty.Reflection
+import scala.util.control.Breaks._
 
 
 trait NonCaseClassInspector:
@@ -62,15 +63,24 @@ trait NonCaseClassInspector:
       case _ => Map.empty[String,Map[String, Map[String,String]]]
     }
 
+    // FIX: Traverse up ALL the parents, until the first found fieldName is discovered... not just the first parent!
     def upTreeFind(fieldName: String, sym: Symbol): Option[Symbol] = 
-      symbol.tree.asInstanceOf[ClassDef].parents.headOption match {
-                case Some(tt: TypeTree) => tt.tpe.classSymbol.get.field(fieldName) match {
-                  case dotty.tools.dotc.core.Symbols.NoSymbol => 
-                    upTreeFind(fieldName, tt.tpe.classSymbol.get)
-                  case found => Some(found)
-                }
-                case _ => None
-              }
+      var foundSymbol: Option[Symbol] = None
+      breakable {
+        symbol.tree.asInstanceOf[ClassDef].parents.foreach{ _ match {
+          case tt: TypeTree => 
+            tt.tpe.classSymbol.get.field(fieldName) match {
+              case dotty.tools.dotc.core.Symbols.NoSymbol if tt.tpe.classSymbol.get.fullName == "java.lang.Object" => // top of tree 
+              case dotty.tools.dotc.core.Symbols.NoSymbol => upTreeFind(fieldName, tt.tpe.classSymbol.get)
+              case found => 
+                foundSymbol = Some(found)
+                break
+            }
+          case _ => 
+        }}
+      }
+      foundSymbol
+
 
     // Include inherited methods (var & def), including inherited!
     // Produces (val <field>, method <field>_=)
@@ -139,8 +149,9 @@ trait NonCaseClassInspector:
         fieldName,
         rtype,
         knownAnnos(fieldName),
-        fieldDefaultMethods.get(index),
-        originalTypeSymbol
+        None, // we don't know how to get the default values (initial set values) of non-constructor fields at present
+        originalTypeSymbol,
+        true
       )
     }.toList
 
