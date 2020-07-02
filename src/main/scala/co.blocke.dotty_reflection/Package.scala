@@ -24,6 +24,10 @@ val ENUM_CLASSNAME = "scala.Enumeration.Value"
 
 val typesymregx = """.*\.\_\$(.+)$""".r
 
+
+// Poked this here for now.  Used for show()
+final inline def tabs(t:Int) = "   "*t
+
 // Need this cache becuause apparently calling paramSymss mutates states and crashes on repeated calls!
 import dotty.tools.dotc.core.Symbols.{Symbol => CoreSymbol}
 private val mm = new java.util.concurrent.ConcurrentHashMap[CoreSymbol, List[TypeSymbol]]

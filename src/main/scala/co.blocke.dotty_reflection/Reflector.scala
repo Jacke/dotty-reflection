@@ -39,6 +39,14 @@ object Reflector:
     import reflect.{_, given _}
     aType match {
       case AppliedType(t,tob) => 
+
+        // Secret Magic: "apply" the AppliedType!
+        //--------------------------------------------------
+        // val caseFields = aType.classSymbol.get.caseFields
+        // if caseFields.nonEmpty then
+        //   val a = caseFields.head
+        //   println("=== "+aType.memberType(a))
+
         val syms = getTypeParameters(reflect)(t.classSymbol.get)
         val pl: List[RType] = 
           tob.map( tpe => tpe.asInstanceOf[Type].typeSymbol.fullName match {

@@ -1,0 +1,17 @@
+
+	Approach:  Hybrid of...
+
+		1) True runtime reflection, accomplished by use of a compiler plug-in, which will determine the RType
+		   of each class/trait in your code and generate an Annotation holding the RType.
+
+			This is thought to eliminate the 2-6 sec required to process Dotty Inspection, which uses file I/O
+			on .dotty files.
+
+		2) Compile-time reflection (Dotty Reflection) via a macro.  This will be the fall-back for:
+		      - non-parameterized classes that are Dotty, but not user-written (i.e. no compiler plugin used)
+		      - principle method for parameterized types (AppliedTypes)
+
+		3) Runtime inspection (Tasty Inspection) for classes missing the Annotation (not user-written) -- used
+		   for traits.
+
+

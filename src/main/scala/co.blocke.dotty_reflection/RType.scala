@@ -52,7 +52,3 @@ case class SelfRefRType(name: String, params: Array[RType] = Array.empty[RType])
 
 object RType:
   inline def of[T](implicit ct: scala.reflect.ClassTag[T]): RType = Reflector.reflectOn[T]
-
-
-// Poked this here for now.  Used for show()
-final inline def tabs(t:Int) = "   "*t
