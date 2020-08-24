@@ -78,10 +78,18 @@ object RType:
     tc.inspect("", List(clazz.getName))
     tc.inspected
 
-  inline def inTermsOf(clazz: Class[_], baseTrait: TraitInfo): Transporter.RType =
+  inline def inTermsOf2[T](clazz: Class[_]): Transporter.RType =
+    val s3r = clazz.getAnnotations.toList.head.asInstanceOf[S3Reflection]
+    val raw = RType.deserialize(s3r.rtype)
+    val tc = new TastyInspection2(raw, of[T].asInstanceOf[info.TraitInfo])
+    tc.inspect("", List("scala.Any"))
+    tc.inspected
+
+/*
     val tc = new TastyInspection(clazz, Some(baseTrait))
     tc.inspect("", List(clazz.getName))
     tc.inspected
+    */
 
   // pre-loaded with known language primitive types
   private val cache = scala.collection.mutable.Map.empty[String,Transporter.RType]

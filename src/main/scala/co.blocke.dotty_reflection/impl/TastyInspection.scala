@@ -46,3 +46,29 @@ class TastyInspection[T](clazz: Class[_], inTermsOf: Option[TraitInfo] = None) e
       case None      =>
         inspected = pre
     }
+
+
+class TastyInspection2( clazzRType: Transporter.RType, inTermsOf: TraitInfo ) extends TastyInspector:
+  var inspected: Transporter.RType = UnknownInfo(clazzRType.name)
+
+  protected def processCompilationUnit(reflect: Reflection)(root: reflect.Tree): Unit = 
+    import reflect.{_, given _}
+
+    /* Ok, so InTermsOf a trait is a complex process.  Going in we have fully known types for the trait.
+    * 1) We do a pre-scan of the class to find out where the type symbols are.
+    * 2) We think of the pre-scanned class in terms of (same fields) as the given trait (re-framed scan)
+    * 3) From this re-framed scan we traverse it to find the paths to each needed type symbol
+    * 4) We apply the paths to the known trait to get the RType of each type symbol
+    * 5) Convert the RType to a reflect.Type so we can build the final AppliedType for clazz with the
+    *     proper/known types.
+    */
+    val clazzSyms = clazzRType.infoClass.getTypeParameters.toList.map(_.getName.asInstanceOf[TypeSymbol])
+    val (symPaths, unfoundSyms) = clazzRType.findPaths(clazzSyms.map( sym => (sym->Path(Nil)) ).toMap, Some(inTermsOf))
+
+    val args: List[reflect.Type] = clazzSyms.map( _ match {
+      case sym if unfoundSyms.contains(sym) => Type(classOf[Any])
+      case sym => 
+        symPaths(sym).nav(inTermsOf).getOrElse( throw new ReflectException(s"Failure to resolve type parameter '${sym}'")).toType(reflect)
+      })
+
+    inspected = RType.unwindType(reflect)( AppliedType(clazzRType.toType(reflect), args) )
