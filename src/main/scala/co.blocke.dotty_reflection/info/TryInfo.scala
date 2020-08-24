@@ -7,12 +7,12 @@ import scala.tasty.Reflection
 
 case class TryInfo protected[dotty_reflection](
   name: String,
-  _tryType: RType
-) extends RType:
+  _tryType: Transporter.RType
+) extends Transporter.RType:
 
   val fullName: String = name + "[" + _tryType.fullName  + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
-  lazy val tryType: RType = _tryType match {
+  lazy val tryType: Transporter.RType = _tryType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -30,7 +30,7 @@ case class TryInfo protected[dotty_reflection](
         other.findPaths(findSyms.map( (k,v) => k -> v.push(TryPathElement()) ))
     }
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _tryType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_tryType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this

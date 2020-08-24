@@ -4,11 +4,11 @@ package impl
 import info._
 
 trait PathElement:
-  def nav( rt: Option[RType] ): Option[RType]
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType]
 
 
 case class ClassPathElement(name: String, fieldName: String) extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case c: ScalaCaseClassInfo if c.name == name => Some(c)
       case c: ScalaClassInfo if c.name == name => Some(c)
@@ -17,7 +17,7 @@ case class ClassPathElement(name: String, fieldName: String) extends PathElement
 
 
 case class TraitPathElement(name: String, fieldName: String) extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case t: TraitInfo if t.name == name => Some(t)
       case _ => None
@@ -25,21 +25,21 @@ case class TraitPathElement(name: String, fieldName: String) extends PathElement
 
 
 case class OptionPathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case o: ScalaOptionInfo => Some(o.optionParamType)
       case _ => None
     })
 
 case class TryPathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case o: TryInfo => Some(o.tryType)
       case _ => None
     })
 
 case class SeqPathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case s: CollectionRType => Some(s.elementType)
       case _ => None
@@ -47,7 +47,7 @@ case class SeqPathElement() extends PathElement:
 
 
 case class MapKeyPathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case m: MapLikeInfo => Some(m.elementType)
       case m: JavaMapInfo => Some(m.elementType)
@@ -56,7 +56,7 @@ case class MapKeyPathElement() extends PathElement:
 
 
 case class MapValuePathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case m: MapLikeInfo => Some(m.elementType2)
       case m: JavaMapInfo => Some(m.elementType2)
@@ -65,7 +65,7 @@ case class MapValuePathElement() extends PathElement:
 
 
 case class TuplePathElement(idx: Int) extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case t: TupleInfo => Some(t.tupleTypes(idx))
       case _ => None
@@ -73,7 +73,7 @@ case class TuplePathElement(idx: Int) extends PathElement:
 
 
 case class LeftPathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case e: EitherInfo => Some(e.leftType)
       case i: IntersectionInfo => Some(i.leftType)
@@ -83,7 +83,7 @@ case class LeftPathElement() extends PathElement:
 
 
 case class RightPathElement() extends PathElement:
-  def nav( rt: Option[RType] ): Option[RType] = 
+  def nav( rt: Option[Transporter.RType] ): Option[Transporter.RType] = 
     rt.flatMap(_ match {
       case e: EitherInfo => Some(e.rightType)
       case i: IntersectionInfo => Some(i.rightType)
@@ -95,6 +95,6 @@ case class RightPathElement() extends PathElement:
   
 
 case class Path( p: List[PathElement] ):
-  def nav( rt: RType ): Option[RType] = 
-    p.foldLeft(Some(rt).asInstanceOf[Option[RType]]){ (item, pathElement) => pathElement.nav(item) }
+  def nav( rt: Transporter.RType ): Option[Transporter.RType] = 
+    p.foldLeft(Some(rt).asInstanceOf[Option[Transporter.RType]]){ (item, pathElement) => pathElement.nav(item) }
   def push( pe: PathElement ): Path = this.copy( p = this.p :+ pe )

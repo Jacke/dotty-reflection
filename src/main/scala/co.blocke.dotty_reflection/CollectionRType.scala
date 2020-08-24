@@ -6,9 +6,9 @@ import scala.tasty.Reflection
 
 /** Marker trait for all Scala/Java collections */
 trait CollectionRType:
-  self: RType =>
+  self: Transporter.RType =>
 
-  lazy val elementType: RType
+  lazy val elementType: Transporter.RType
 
   override def toType(reflect: Reflection): reflect.Type = 
     import reflect.{_, given _}

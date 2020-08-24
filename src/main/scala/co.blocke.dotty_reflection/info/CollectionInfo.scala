@@ -7,20 +7,20 @@ import scala.tasty.Reflection
 /** Arity 1 Collections, e.g. List, Set, Seq */
 case class SeqLikeInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -29,9 +29,9 @@ case class SeqLikeInfo protected[dotty_reflection](
 /** Arity 2 Collections, Map flavors, basiclly */
 case class MapLikeInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType,
-  _elementType2: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType,
+  _elementType2: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "," + _elementType2.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
@@ -58,7 +58,7 @@ case class MapLikeInfo protected[dotty_reflection](
     (stage1Found ++ stage2Found, stage2Unfound)
     
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     var needsCopy = false
     val eKey = _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => 
@@ -85,11 +85,11 @@ case class MapLikeInfo protected[dotty_reflection](
     else
       this
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
-  lazy val elementType2: RType = _elementType2 match {
+  lazy val elementType2: Transporter.RType = _elementType2 match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -105,20 +105,20 @@ case class MapLikeInfo protected[dotty_reflection](
 /** Scala Array */
 case class ArrayInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -131,20 +131,20 @@ case class ArrayInfo protected[dotty_reflection](
 /** Java Set dirivative */
 case class JavaSetInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -153,20 +153,20 @@ case class JavaSetInfo protected[dotty_reflection](
 /** Java List dirivative */
 case class JavaListInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -175,20 +175,20 @@ case class JavaListInfo protected[dotty_reflection](
 /** Java Array */
 case class JavaArrayInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
  
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -201,20 +201,20 @@ case class JavaArrayInfo protected[dotty_reflection](
 /** Java Queue dirivative */
 case class JavaQueueInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -223,20 +223,20 @@ case class JavaQueueInfo protected[dotty_reflection](
 /** Java Stack dirivative */
 case class JavaStackInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
       
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_elementType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
       case other => this.copy(_elementType = other.resolveTypeParams(paramMap))
     }
 
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -245,18 +245,18 @@ case class JavaStackInfo protected[dotty_reflection](
 /** Java Map dirivative */
 case class JavaMapInfo protected[dotty_reflection](
   name: String,
-  _elementType: RType,
-  _elementType2: RType
-) extends RType with CollectionRType:
+  _elementType: Transporter.RType,
+  _elementType2: Transporter.RType
+) extends Transporter.RType with CollectionRType:
 
   val fullName = name + "[" + _elementType.fullName + "," + _elementType2.fullName + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
   
-  lazy val elementType: RType = _elementType match {
+  lazy val elementType: Transporter.RType = _elementType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
-  lazy val elementType2: RType = _elementType2 match {
+  lazy val elementType2: Transporter.RType = _elementType2 match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -282,7 +282,7 @@ case class JavaMapInfo protected[dotty_reflection](
     }
     (stage1Found ++ stage2Found, stage2Unfound)
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     var needsCopy = false
     val eKey = _elementType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => 

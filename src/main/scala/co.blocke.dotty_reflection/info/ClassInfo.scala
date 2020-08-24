@@ -3,7 +3,7 @@ package info
 
 import impl._
 
-trait ClassInfo extends RType: 
+trait ClassInfo extends Transporter.RType: 
   lazy val fields:                Array[FieldInfo]
   lazy val typeMembers:           Array[TypeMemberInfo]
   lazy val annotations:           Map[String, Map[String,String]]
@@ -151,7 +151,7 @@ case class ScalaClassInfo protected[dotty_reflection] (
 case class JavaClassInfo protected[dotty_reflection] ( 
     name: String, 
     fullName: String,
-    paramTypes: Array[RType], 
+    paramTypes: Array[Transporter.RType], 
     _proxy: Option[JavaClassInfoProxy] = None 
   ) extends ClassInfo:
   lazy val infoClass: Class[_] = Class.forName(name)
@@ -165,7 +165,7 @@ case class JavaClassInfo protected[dotty_reflection] (
 
   private lazy val fieldsByName = fields.map(f => (f.name, f.asInstanceOf[JavaFieldInfo])).toMap
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType =
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType =
     val newProxy = this.proxy.copy(_fields = fields.map( f => f.resolveTypeParams(paramMap) ))
     val newFullName =
       if proxy.paramMap.nonEmpty then
@@ -190,8 +190,8 @@ case class JavaClassInfoProxy protected[dotty_reflection] (
     name:                   String,
     _fields:                Array[FieldInfo],
     _annotations:           Map[String, Map[String,String]],
-    paramMap:               Map[TypeSymbol, RType]
-  ) extends RType:
+    paramMap:               Map[TypeSymbol, Transporter.RType]
+  ) extends Transporter.RType:
 
   val fullName = name
   lazy val annotations = _annotations

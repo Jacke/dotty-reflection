@@ -1,32 +1,36 @@
 name := "dotty-reflection"
 organization in ThisBuild := "co.blocke"
-val dottyVersion =  "0.26.0-RC1" //"0.25.0-RC2"
+val dottyVersion =  "0.26.0-RC1"
 
-lazy val root = project
-  .in(file("."))
+// lazy val library = project
+//   .settings(settings)
+//   .settings(
+//     name := "reflection_library",
+//     publishArtifact := false,
+//     doc := null,  // disable dottydoc for now
+//     sources in (Compile, doc) := Seq(),
+//     Test / parallelExecution := false,
+//     libraryDependencies ++= commonDependencies
+//   )
+
+lazy val root = (project in file("."))
   .settings(settings)
   .settings(
-    name := "reflection_library",
-    doc := null,  // disable dottydoc for now
-    sources in (Compile, doc) := Seq(),
-    Test / parallelExecution := false,
-    libraryDependencies ++= commonDependencies
-  )
-
-  /*  NO INTENTION TO USE!  Left here to show how to build a compiler-plugin.
-lazy val plugin = project
-  .in(file("plugin"))
-  .settings(settings)
-  .settings(
-    name := "reflection_plugin",
+    name := "dotty_reflection",
     Compile / packageBin / mappings += {
       (baseDirectory.value / "plugin.properties") -> "plugin.properties"
     },
     doc := null,  // disable dottydoc for now
     sources in (Compile, doc) := Seq(),
     libraryDependencies ++= commonDependencies
-  ).dependsOn(library)
-  */
+  )
+
+// lazy val root = (project in file("."))
+//   .aggregate(library, plugin)
+  // .settings(
+    // publishArtifact := false,
+  //   update / aggregate := false
+  // )
 
 //==========================
 // Dependencies

@@ -7,18 +7,18 @@ import impl._
 import scala.tasty.Reflection
 
 
-trait OptionInfo extends RType:
-  lazy val optionParamType: RType
+trait OptionInfo extends Transporter.RType:
+  lazy val optionParamType: Transporter.RType
 
 
 case class ScalaOptionInfo protected[dotty_reflection](
   name: String,
-  _optionParamType: RType
+  _optionParamType: Transporter.RType
 ) extends OptionInfo:
 
   val fullName: String = name + "[" + _optionParamType.fullName  + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
-  lazy val optionParamType: RType = _optionParamType match {
+  lazy val optionParamType: Transporter.RType = _optionParamType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -36,7 +36,7 @@ case class ScalaOptionInfo protected[dotty_reflection](
         other.findPaths(findSyms.map( (k,v) => k -> v.push(OptionPathElement()) ))
     }
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _optionParamType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_optionParamType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
@@ -50,12 +50,12 @@ case class ScalaOptionInfo protected[dotty_reflection](
 
 case class JavaOptionalInfo protected[dotty_reflection](
   name: String,
-  _optionParamType: RType
+  _optionParamType: Transporter.RType
 ) extends OptionInfo:
 
   val fullName: String = name + "[" + _optionParamType.fullName  + "]"
   lazy val infoClass: Class[_] = Class.forName(name)
-  lazy val optionParamType: RType = _optionParamType match {
+  lazy val optionParamType: Transporter.RType = _optionParamType match {
     case e: SelfRefRType => e.resolve
     case e => e
   }
@@ -64,7 +64,7 @@ case class JavaOptionalInfo protected[dotty_reflection](
     import reflect.{_, given _}
     AppliedType(Type(infoClass), List(optionParamType.toType(reflect)))
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     _optionParamType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(_optionParamType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this

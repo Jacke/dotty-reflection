@@ -5,8 +5,8 @@ import scala.tasty.Reflection
 
 case class TupleInfo protected[dotty_reflection](
   name: String,
-  _tupleTypes: Array[RType]
-) extends RType:
+  _tupleTypes: Array[Transporter.RType]
+) extends Transporter.RType:
 
   val fullName: String = name + _tupleTypes.map(_.fullName).toList.mkString("[",",","]")
 
@@ -22,7 +22,7 @@ case class TupleInfo protected[dotty_reflection](
     import reflect.{_, given _}
     AppliedType(Type(infoClass), tupleTypes.toList.map( _.toType(reflect) ))
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     var needsCopy = false
     val resolvedTupleTypes = _tupleTypes.map( _ match {
         case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => 

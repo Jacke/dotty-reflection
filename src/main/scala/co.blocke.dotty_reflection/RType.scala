@@ -4,33 +4,45 @@ import scala.quoted._
 import impl._
 import info._
 import scala.tasty.Reflection
+import java.io._
 
-/** A materializable type */
-trait RType extends Serializable:
-  val name: String         /** typically the fully-qualified class name */
-  val fullName: String
-  override def hashCode: Int = fullName.hashCode
-  override def equals(obj: Any) = this.hashCode == obj.hashCode
-  lazy val infoClass: Class[_]  /** the JVM class of this type */
+/** This object wrapper around RType is because Serializable is not viewable from inside the compiler plugin
+    code unless this is wrapped.  Don't know why--but there it is. */
+object Transporter:
 
-  // Take a parameterized type's normal type 'T' and map it to the declared type 'X'
-  def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = this
+  /** A materializable type */
+  trait RType extends Serializable:
+    val name: String         /** typically the fully-qualified class name */
+    val fullName: String
+    override def hashCode: Int = fullName.hashCode
+    override def equals(obj: Any) = this.hashCode == obj.hashCode
+    lazy val infoClass: Class[_]  /** the JVM class of this type */
 
-  // Find paths to given type symbols
-  def findPaths(findSyms: Map[TypeSymbol,Path], referenceTrait: Option[TraitInfo] = None): (Map[TypeSymbol, Path], Map[TypeSymbol, Path]) = 
-    (Map.empty[TypeSymbol,Path], findSyms) // (themThatsFound, themThatsStillLost)
+    // Take a parameterized type's normal type 'T' and map it to the declared type 'X'
+    def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = this
 
-  def toType(reflect: Reflection): reflect.Type = reflect.Type(infoClass)
+    // Find paths to given type symbols
+    def findPaths(findSyms: Map[TypeSymbol,Path], referenceTrait: Option[TraitInfo] = None): (Map[TypeSymbol, Path], Map[TypeSymbol, Path]) = 
+      (Map.empty[TypeSymbol,Path], findSyms) // (themThatsFound, themThatsStillLost)
 
-  def show(
-    tab: Int = 0,
-    seenBefore: List[String] = Nil,
-    supressIndent: Boolean = false,
-    modified: Boolean = false // modified is "special", ie. don't show index & sort for nonconstructor fields
-    ): String  
+    def toType(reflect: Reflection): reflect.Type = reflect.Type(infoClass)
 
-  override def toString(): String = show()
+    def show(
+      tab: Int = 0,
+      seenBefore: List[String] = Nil,
+      supressIndent: Boolean = false,
+      modified: Boolean = false // modified is "special", ie. don't show index & sort for nonconstructor fields
+      ): String  
 
+    override def toString(): String = show()
+
+    /** Write the object to a Base64 string. */
+    def serialize: String =
+      val baos = new ByteArrayOutputStream()
+      val oos = new ObjectOutputStream( baos )
+      oos.writeObject( this )
+      oos.close()
+      java.util.Base64.getEncoder().encodeToString(baos.toByteArray())
 
 
 /** Placeholder RType to be lazy-resolved, used for self-referencing types.  This is needed because without it, reflecting on
@@ -38,7 +50,7 @@ trait RType extends Serializable:
  *  type cache so that when the self-reference comes there's something in the cache to find.
  *  When one of these is encountered in the wild, just re-Reflect on the infoClass and you'll get the non-SelfRef (i.e. normal) RType
  */
-case class SelfRefRType(name: String) extends RType:
+case class SelfRefRType(name: String) extends Transporter.RType:
   val fullName = name
   lazy val infoClass = Class.forName(name)
   def resolve = RType.of(infoClass)
@@ -54,34 +66,34 @@ object RType:
   //------------------------
   //  <<  MACRO ENTRY >>
   //------------------------
-  inline def of[T]: RType = ${ ofImpl[T]() }
+  inline def of[T]: Transporter.RType = ${ ofImpl[T]() }
 
-  inline def of(clazz: Class[_]): RType = 
+  inline def of(clazz: Class[_]): Transporter.RType = 
     val tc = new TastyInspection[Any](clazz)
     tc.inspect("", List(clazz.getName))
     tc.inspected
 
-  inline def inTermsOf[T](clazz: Class[_]): RType = 
+  inline def inTermsOf[T](clazz: Class[_]): Transporter.RType = 
     val tc = new TastyInspection[T](clazz, Some(of[T].asInstanceOf[info.TraitInfo]))
     tc.inspect("", List(clazz.getName))
     tc.inspected
 
-  inline def inTermsOf(clazz: Class[_], baseTrait: TraitInfo): RType =
+  inline def inTermsOf(clazz: Class[_], baseTrait: TraitInfo): Transporter.RType =
     val tc = new TastyInspection(clazz, Some(baseTrait))
     tc.inspect("", List(clazz.getName))
     tc.inspected
 
   // pre-loaded with known language primitive types
-  private val cache = scala.collection.mutable.Map.empty[String,RType]
+  private val cache = scala.collection.mutable.Map.empty[String,Transporter.RType]
   // private val cache = scala.collection.mutable.Map.empty[Object,RType] //new java.util.concurrent.ConcurrentHashMap[Object, RType]()
   def cacheSize = cache.size
   
-  def ofImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[RType] = 
+  def ofImpl[T]()(implicit qctx: QuoteContext, ttype: scala.quoted.Type[T]): Expr[Transporter.RType] = 
     import qctx.tasty.{_, given _}
     Expr( unwindType(qctx.tasty)(typeOf[T]) )
 
     
-  protected[dotty_reflection] def unwindType(reflect: Reflection)(aType: reflect.Type, resolveTypeSyms: Boolean = true): RType =
+  protected[dotty_reflection] def unwindType(reflect: Reflection)(aType: reflect.Type, resolveTypeSyms: Boolean = true): Transporter.RType =
     import reflect.{_, given _}
 
     val className = aType.asInstanceOf[TypeRef] match {
@@ -119,3 +131,10 @@ object RType:
       case ENUM_CLASSNAME => aType.asInstanceOf[TypeRef].qualifier.asInstanceOf[reflect.TermRef].termSymbol.moduleClass.fullName
       case tn => tn
     }
+
+  def deserialize( s: String ): Transporter.RType =
+    val data = java.util.Base64.getDecoder().decode( s )
+    val ois  = new ObjectInputStream( new ByteArrayInputStream( data ) )
+    val o    = ois.readObject()
+    ois.close()
+    return o.asInstanceOf[Transporter.RType]

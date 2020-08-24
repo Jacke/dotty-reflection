@@ -7,9 +7,9 @@ import impl._
 case class TraitInfo protected[dotty_reflection](
     name: String, 
     fields: Array[FieldInfo],
-    actualParameterTypes: Array[RType] = Array.empty[RType],
+    actualParameterTypes: Array[Transporter.RType] = Array.empty[Transporter.RType],
     paramSymbols: Array[TypeSymbol] = Array.empty[TypeSymbol],
-  ) extends RType: 
+  ) extends Transporter.RType: 
 
   val fullName: String = 
     if actualParameterTypes.size > 0 then
@@ -58,7 +58,7 @@ case class TraitInfo protected[dotty_reflection](
           "" 
         else 
           val syms = actualParameterTypes.zip(paramSymbols)
-          " actualParamTypes: [\n"+syms.map{ (ap:RType, s:TypeSymbol) => tabs(tab+1) + s.toString+": "+ap.show(tab+2,name :: seenBefore, true) }.mkString + tabs(tab) + "]"
+          " actualParamTypes: [\n"+syms.map{ (ap:Transporter.RType, s:TypeSymbol) => tabs(tab+1) + s.toString+": "+ap.show(tab+2,name :: seenBefore, true) }.mkString + tabs(tab) + "]"
       {if(!supressIndent) tabs(tab) else ""} + this.getClass.getSimpleName 
       + s"($name)$params with fields:\n"
       + { fields.toList.map(f => tabs(tab+1)+f.name+{if f.originalSymbol.isDefined then "["+f.originalSymbol.get.toString+"]" else ""}+": "+f.fieldType.show(tab+1, Nil, true)).mkString("") }
@@ -66,8 +66,8 @@ case class TraitInfo protected[dotty_reflection](
 
 case class SealedTraitInfo protected(
     name: String, 
-    children: Array[RType]
-  ) extends RType:
+    children: Array[Transporter.RType]
+  ) extends Transporter.RType:
 
   val fullName: String = name + children.map(_.fullName).toList.mkString("[",",","]")
   lazy val infoClass: Class[_] = Class.forName(name)

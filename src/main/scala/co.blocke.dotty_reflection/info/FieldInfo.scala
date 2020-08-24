@@ -6,7 +6,7 @@ import java.lang.reflect.Method
 trait FieldInfo extends Serializable:
   val index:                Int
   val name:                 String
-  val fieldType:            RType
+  val fieldType:            Transporter.RType
   val originalSymbol:       Option[TypeSymbol]
   val annotations:          Map[String,Map[String,String]]
   lazy val defaultValue:    Option[Object]
@@ -14,7 +14,7 @@ trait FieldInfo extends Serializable:
   def valueOf[T](target: T): Object
   def reIndex(i: Int): FieldInfo
 
-  def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): FieldInfo
+  def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): FieldInfo
 
   def show(tab: Int = 0, seenBefore: List[String] = Nil, supressIndent: Boolean = false, modified: Boolean = false): String = 
     val newTab = {if supressIndent then tab else tab+1}
@@ -29,7 +29,7 @@ trait FieldInfo extends Serializable:
 case class ScalaFieldInfo(
   index:                    Int,
   name:                     String,
-  fieldType:                RType,
+  fieldType:                Transporter.RType,
   annotations:              Map[String,Map[String,String]],
   defaultValueAccessorName: Option[(String,String)], // (class, method)  //Option[()=>Object],
   originalSymbol:           Option[TypeSymbol],
@@ -41,7 +41,7 @@ case class ScalaFieldInfo(
 
   def reIndex(i: Int): FieldInfo = this.copy(index = i)
 
-  def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): FieldInfo = 
+  def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): FieldInfo = 
     fieldType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(fieldType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this
@@ -56,7 +56,7 @@ case class ScalaFieldInfo(
     companion.getMethod(accessor).invoke(companionInst)
   }
 
-  private def constructorClassFor(t: RType): Class[_] = 
+  private def constructorClassFor(t: Transporter.RType): Class[_] = 
     t match {
       case _: TypeSymbolInfo => classOf[Object] // Magic: Java constructors set param type to Object if it is a parameterized type
       case info: UnionInfo => classOf[Object]  // Union-typed constructors translate to Object in Java, so...
@@ -71,7 +71,7 @@ case class ScalaFieldInfo(
 case class JavaFieldInfo(
   index:           Int,
   name:            String,
-  fieldType:       RType,
+  fieldType:       Transporter.RType,
   annotations:     Map[String,Map[String,String]],
   valueAccessor:   Method,
   valueSetter:     Method,
@@ -81,7 +81,7 @@ case class JavaFieldInfo(
   def valueOf[T](target: T): Object = valueAccessor.invoke(target)
   def setValue[T](target: T, theValue: Object) = valueSetter.invoke(target, theValue)
   def reIndex(i: Int): FieldInfo = this.copy(index = i)
-  def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): FieldInfo = 
+  def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): FieldInfo = 
     fieldType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => this.copy(fieldType = paramMap(ts.name.asInstanceOf[TypeSymbol]))
       case pt: impl.PrimitiveType => this

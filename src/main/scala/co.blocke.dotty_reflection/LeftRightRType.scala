@@ -6,10 +6,10 @@ import scala.tasty.Reflection
 
 /** Marker trait for all Scala/Java left/right types (either, intersection, union) */
 trait LeftRightRType:
-  self: RType =>
+  self: Transporter.RType =>
 
-  lazy val leftType: RType
-  lazy val rightType: RType
+  lazy val leftType: Transporter.RType
+  lazy val rightType: Transporter.RType
 
   override def toType(reflect: Reflection): reflect.Type = 
     import reflect.{_, given _}
@@ -32,9 +32,9 @@ trait LeftRightRType:
     }
     (leftFound ++ rightFound, rightUnfound)
 
-  def _copy( left: RType, right: RType ): RType
+  def _copy( left: Transporter.RType, right: Transporter.RType ): Transporter.RType
 
-  override def resolveTypeParams( paramMap: Map[TypeSymbol, RType] ): RType = 
+  override def resolveTypeParams( paramMap: Map[TypeSymbol, Transporter.RType] ): Transporter.RType = 
     var needsCopy = false
     val left = leftType match {
       case ts: TypeSymbolInfo if paramMap.contains(ts.name.asInstanceOf[TypeSymbol]) => 
